@@ -4,7 +4,7 @@ import { Order } from "../types";
 
 declare global { interface Window { WidgetCheckout: any; } }
 
-const PRODUCT_IMAGE = "https://lh3.googleusercontent.com/aida/ADBb0ugMDvuzjpi3HIXxJrkGmGH0yOZXKap1sVi-O5EWkbRB0XOWalN3MUnHfejxtzZYjTws_ihmgHo8IAP9X7tfeaM8d50nJBUYo7mKHF148tVXvC0tFSic3tw-ysCSYbMuAZZwfzjBUHqftbpqYOElDTvyLFt0R3zgrWnga0bc-7l4CVnYc92kPf2-SWVhWaJW5c_BSTFoVIdh95hQwz0URRUkmfXV9QckzC8m4J6Wgj7-U4OWb8884CIUzfCx";
+const PRODUCT_IMAGE = "https://lh3.googleusercontent.com/aida-public/AB6AXuDb4tCIFKq4rJ1NAc4KY3AWQupIYxvPvzbo2ou8Qs9SISyT_OpBQR_dV0Bxu6VOXnbXmVKNuKlTHWIt97tzsiI0FdGKiUA7nrOioGZ5D0QsIDBnt4Sta1EkXrXylIDfOtgsaRl5RRbiBO1WnueWMi3okedfpcpVxUuBclVXr0j72KU939Mvv8FcE4gMfIXKkTgVAfS0F1n7T0xFRyYRChGGK4Y4cIRqoe_H-QRYojjGXJlhpAfvP49lr8rEui2QpnfepFcGBNTiGD8q";
 
 type PaymentMethod = "wompi" | "pse" | "contraentrega";
 
