@@ -74,7 +74,9 @@ app.post("/api/orders", (req: any, res: any) => {
   };
   orders.push(order);
   saveOrders();
-  res.json({ success: true, order, wompi: { reference, amountInCents: amount, currency: "COP", signature, redirectUrl: `${appUrl}/?checkout=success&orderId=${id}` } });
+  const amountInCents = amount * 100;
+  const signatureInCents = crypto.createHash("sha256").update("${reference}${amountInCents}COP${wompiIntegritySecret}").digest("hex");
+  res.json({ success: true, order, wompi: { reference, amountInCents, currency: "COP", signature: signatureInCents, redirectUrl: "${appUrl}/?checkout=success&orderId=${id}" } });
 });
 
 app.post("/api/wompi/webhook", async (req: any, res: any) => {
@@ -116,3 +118,4 @@ app.delete("/api/orders/:id", (req: any, res: any) => {
 });
 
 export default app;
+
