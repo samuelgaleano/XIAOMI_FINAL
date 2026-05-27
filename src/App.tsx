@@ -140,10 +140,7 @@ export default function App() {
           
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-2xl bg-[#ff6900] text-white w-8 h-8 rounded flex items-center justify-center">
-                Mi
-              </span>
-              <span className="font-bold text-base text-white">Xiaomi CarTech - xiaomicartech.com.co</span>
+              <img src="/xiaomi-cartech-logo.png" alt="Xiaomi CarTech" className="h-12 w-auto brightness-0 invert" />
             </div>
             <p className="text-gray-400 leading-relaxed max-w-sm">
               Somos importadores autorizados independientes del Mi 20W Wireless Car Charger. Garantizamos calidad premium, empaque de fábrica y soporte de entrega garantizado con las mejores pasarelas de pago del país.
