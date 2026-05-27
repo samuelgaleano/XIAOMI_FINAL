@@ -43,7 +43,7 @@ const sendApprovedEmail = async (order: any) => {
     to: [order.customerEmail],
     cc: [resendAdminEmail],
     subject: `Compra aprobada ${order.id} - Xiaomi CarTech`,
-    html: `<h2>Compra exitosa ✅</h2><p>Tu pago fue aprobado por Wompi.</p><p><strong>Pedido:</strong> ${order.id}</p><p><strong>Total:</strong> $${Number(order.amount).toLocaleString("es-CO")} COP</p>`
+    html: `<h2>Compra exitosa</h2><p>Tu pago fue aprobado por Wompi.</p><p><strong>Pedido:</strong> ${order.id}</p><p><strong>Total:</strong> $${Number(order.amount).toLocaleString("es-CO")} COP</p>`
   });
   return { sent: true, response };
 };
@@ -62,9 +62,10 @@ app.post("/api/orders", (req: any, res: any) => {
   if (!customerName || !customerEmail || !customerPhone || !amount || !items?.length) {
     return res.status(400).json({ error: "Datos incompletos" });
   }
-  const id = `XM-${Math.floor(10000 + Math.random() * 90000)}`;
-  const reference = `XCT-${id}-${Date.now()}`;
-  const signature = crypto.createHash("sha256").update(`${reference}${amount}COP${wompiIntegritySecret}`).digest("hex");
+  const id = "XM-" + Math.floor(10000 + Math.random() * 90000);
+  const reference = "XCT-" + id + "-" + Date.now();
+  const amountInCents = amount * 100;
+  const signature = crypto.createHash("sha256").update(reference + amountInCents + "COP" + wompiIntegritySecret).digest("hex");
   const order = {
     id, customerName, customerEmail, customerPhone, customerAddress, customerCity, paymentMethod,
     amount, items, status: "PENDING", shippingStatus: "PENDING",
@@ -74,9 +75,17 @@ app.post("/api/orders", (req: any, res: any) => {
   };
   orders.push(order);
   saveOrders();
-  const amountInCents = amount * 100;
-  const signatureInCents = crypto.createHash("sha256").update("${reference}${amountInCents}COP${wompiIntegritySecret}").digest("hex");
-  res.json({ success: true, order, wompi: { reference, amountInCents, currency: "COP", signature: signatureInCents, redirectUrl: "${appUrl}/?checkout=success&orderId=${id}" } });
+  res.json({
+    success: true,
+    order,
+    wompi: {
+      reference: reference,
+      amountInCents: amountInCents,
+      currency: "COP",
+      signature: signature,
+      redirectUrl: appUrl + "/?checkout=success&orderId=" + id
+    }
+  });
 });
 
 app.post("/api/wompi/webhook", async (req: any, res: any) => {
@@ -118,4 +127,3 @@ app.delete("/api/orders/:id", (req: any, res: any) => {
 });
 
 export default app;
-
