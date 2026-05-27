@@ -103,14 +103,14 @@ export default function ProductLanding({ onOpenCheckout }: ProductLandingProps) 
                 </span>
                 <div className="flex items-baseline gap-3.5 mt-2">
                   <span className="text-4xl font-extrabold text-amber-600" style={{ color: '#ff6900' }}>
-                    $179.900 COP
+                    $169.900 COP
                   </span>
                   <span className="text-base text-gray-400 line-through font-semibold">
                     $219.900 COP
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 font-semibold mt-1">
-                  ¡Ahorras $40.000 COP de forma inmediata!
+                  ¡Ahorras $50.000 COP de forma inmediata!
                 </p>
               </div>
 
@@ -507,7 +507,7 @@ export default function ProductLanding({ onOpenCheckout }: ProductLandingProps) 
               ¿Listo para subir de nivel la carga en tu automóvil?
             </h2>
             <p className="text-white/90 text-sm sm:text-base mt-3 max-w-xl font-medium">
-              Aprovecha hoy el Envío Gratis a todo Colombia y el precio especial de distribuidor directo de $179.900 COP. Despachamos tu pedido con empaque sellado oficial.
+              Aprovecha hoy el Envío Gratis a todo Colombia y el precio especial de distribuidor directo de $169.900 COP. Despachamos tu pedido con empaque sellado oficial.
             </p>
           </div>
           <div className="flex flex-col gap-3 justify-center">

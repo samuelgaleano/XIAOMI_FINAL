@@ -20,7 +20,7 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
   const [sameBilling, setSameBilling] = React.useState(true);
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("wompi");
   const [config, setConfig] = React.useState<{ wompiPublicKey: string; hasWompiConfig: boolean } | null>(null);
-  const price = 179900;
+  const price = 169900;
   const originalPrice = 219900;
 
   React.useEffect(() => {
