@@ -16,7 +16,7 @@ export default function Navigation({ currentTab, setCurrentTab, onOpenCheckout, 
           <img 
             src="/xiaomi-cartech-logo.png" 
             alt="Xiaomi CarTech" 
-            className="h-12 w-auto"
+            className="h-16 sm:h-20 w-auto"
           />
         </button>
 
@@ -81,3 +81,4 @@ export default function Navigation({ currentTab, setCurrentTab, onOpenCheckout, 
     </nav>
   );
 }
+
