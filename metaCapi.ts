@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-const META_PIXEL_ID = "1362889325944564";
+export const META_PIXEL_ID = "1362889325944564";
 const META_API_VERSION = "v21.0";
 const PRODUCT_CONTENT_ID = "MI-20W-CAR-CHARGER";
 

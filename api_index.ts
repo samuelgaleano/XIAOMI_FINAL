@@ -4,7 +4,7 @@ import fs from "fs";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import { Resend } from "resend";
-import { sendMetaPurchaseEvent, getClientIp } from "./metaCapi.js";
+import { sendMetaPurchaseEvent, getClientIp, META_PIXEL_ID } from "./metaCapi.js";
 
 dotenv.config();
 
@@ -64,6 +64,11 @@ app.get("/api/health/integrations", (req: any, res: any) => {
       apiKeyConfigured: !!resendApiKey,
       fromEmail: resendFromEmail,
       adminEmail: resendAdminEmail
+    },
+    meta: {
+      pixelId: META_PIXEL_ID,
+      capiTokenConfigured: !!process.env.META_CAPI_ACCESS_TOKEN,
+      testEventCode: process.env.META_TEST_EVENT_CODE || null
     }
   });
 });
