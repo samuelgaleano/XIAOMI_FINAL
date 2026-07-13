@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { Resend } from "resend";
+import { sendMetaPurchaseEvent, getClientIp } from "./metaCapi";
 
 dotenv.config();
 
@@ -94,8 +95,8 @@ app.get("/api/orders", (req, res) => {
   res.json(sorted);
 });
 
-app.post("/api/orders", (req, res) => {
-  const { customerName, customerEmail, customerPhone, customerAddress, customerCity, amount, items, paymentMethod = "Wompi" } = req.body;
+app.post("/api/orders", async (req, res) => {
+  const { customerName, customerEmail, customerPhone, customerAddress, customerCity, amount, items, paymentMethod = "Wompi", fbp, fbc } = req.body;
 
   if (!customerName || !customerEmail || !customerPhone || !amount || !items?.length) {
     return res.status(400).json({ error: "Datos incompletos" });
@@ -122,11 +123,27 @@ app.post("/api/orders", (req, res) => {
     shippingStatus: "PENDING",
     expectedShipDate: addBusinessDays(new Date(), 2),
     createdAt: new Date().toISOString(),
-    paymentDetails: { transactionId: reference }
+    paymentDetails: { transactionId: reference },
+    metaTracking: { fbp, fbc, clientIp: getClientIp(req), userAgent: req.headers["user-agent"] }
   };
 
   orders.push(order);
   saveOrders();
+
+  if (paymentMethod === "Contra entrega") {
+    await sendMetaPurchaseEvent({
+      eventId: reference,
+      orderId: id,
+      value: amount,
+      currency: "COP",
+      customerEmail,
+      customerPhone,
+      fbp,
+      fbc,
+      clientIp: order.metaTracking.clientIp,
+      userAgent: order.metaTracking.userAgent
+    });
+  }
 
   res.json({
     success: true,
@@ -172,6 +189,19 @@ app.post("/api/wompi/webhook", async (req, res) => {
     } catch (error) {
       console.error("[RESEND] failed to send approved notification:", error);
     }
+
+    await sendMetaPurchaseEvent({
+      eventId: reference,
+      orderId: order.id,
+      value: order.amount,
+      currency: "COP",
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+      fbp: order.metaTracking?.fbp,
+      fbc: order.metaTracking?.fbc,
+      clientIp: order.metaTracking?.clientIp,
+      userAgent: order.metaTracking?.userAgent
+    });
   }
 
   res.json({ ok: true });

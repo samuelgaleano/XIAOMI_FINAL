@@ -4,6 +4,7 @@ import fs from "fs";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import { Resend } from "resend";
+import { sendMetaPurchaseEvent, getClientIp } from "./metaCapi";
 
 dotenv.config();
 
@@ -57,8 +58,8 @@ app.get("/api/orders", (req: any, res: any) => {
   res.json(sorted);
 });
 
-app.post("/api/orders", (req: any, res: any) => {
-  const { customerName, customerEmail, customerPhone, customerAddress, customerCity, amount, items, paymentMethod = "Wompi" } = req.body;
+app.post("/api/orders", async (req: any, res: any) => {
+  const { customerName, customerEmail, customerPhone, customerAddress, customerCity, amount, items, paymentMethod = "Wompi", fbp, fbc } = req.body;
   if (!customerName || !customerEmail || !customerPhone || !amount || !items?.length) {
     return res.status(400).json({ error: "Datos incompletos" });
   }
@@ -71,10 +72,25 @@ app.post("/api/orders", (req: any, res: any) => {
     amount, items, status: "PENDING", shippingStatus: "PENDING",
     expectedShipDate: addBusinessDays(new Date(), 2),
     createdAt: new Date().toISOString(),
-    paymentDetails: { transactionId: reference }
+    paymentDetails: { transactionId: reference },
+    metaTracking: { fbp, fbc, clientIp: getClientIp(req), userAgent: req.headers["user-agent"] }
   };
   orders.push(order);
   saveOrders();
+  if (paymentMethod === "Contra entrega") {
+    await sendMetaPurchaseEvent({
+      eventId: reference,
+      orderId: id,
+      value: amount,
+      currency: "COP",
+      customerEmail,
+      customerPhone,
+      fbp,
+      fbc,
+      clientIp: order.metaTracking.clientIp,
+      userAgent: order.metaTracking.userAgent
+    });
+  }
   res.json({
     success: true,
     order,
@@ -98,7 +114,21 @@ app.post("/api/wompi/webhook", async (req: any, res: any) => {
   if (data?.status === "APPROVED") { order.status = "APPROVED"; order.paymentDetails.wompiTransactionId = data.id; }
   else if (["DECLINED", "ERROR", "VOIDED"].includes(data?.status)) { order.status = "DECLINED"; }
   saveOrders();
-  if (data?.status === "APPROVED") { try { await sendApprovedEmail(order); } catch (e) { console.error(e); } }
+  if (data?.status === "APPROVED") {
+    try { await sendApprovedEmail(order); } catch (e) { console.error(e); }
+    await sendMetaPurchaseEvent({
+      eventId: data.reference,
+      orderId: order.id,
+      value: order.amount,
+      currency: "COP",
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+      fbp: order.metaTracking?.fbp,
+      fbc: order.metaTracking?.fbc,
+      clientIp: order.metaTracking?.clientIp,
+      userAgent: order.metaTracking?.userAgent
+    });
+  }
   res.json({ ok: true });
 });
 

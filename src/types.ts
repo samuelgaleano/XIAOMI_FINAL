@@ -1,3 +1,9 @@
+declare global {
+  interface Window {
+    fbq?: (...args: any[]) => void;
+  }
+}
+
 export interface OrderItem {
   name: string;
   price: number;
@@ -20,6 +26,12 @@ export interface Order {
   };
   amount: number;
   status: 'PENDING' | 'APPROVED' | 'DECLINED';
+  metaTracking?: {
+    fbp?: string;
+    fbc?: string;
+    clientIp?: string;
+    userAgent?: string;
+  };
   shippingStatus?: 'PENDING' | 'SHIPPED';
   expectedShipDate?: string;
   shippedAt?: string;

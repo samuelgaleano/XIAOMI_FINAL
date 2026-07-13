@@ -8,6 +8,21 @@ const PRODUCT_IMAGE = "https://lh3.googleusercontent.com/aida-public/AB6AXuDb4tC
 
 type PaymentMethod = "wompi" | "pse" | "contraentrega";
 
+const getCookie = (name: string): string | undefined => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : undefined;
+};
+
+const trackPurchase = (orderId: string, eventId: string, value: number) => {
+  window.fbq?.('track', 'Purchase', {
+    content_ids: ['MI-20W-CAR-CHARGER'],
+    content_type: 'product',
+    value,
+    currency: 'COP',
+    order_id: orderId,
+  }, { eventID: eventId });
+};
+
 export default function CheckoutPage({ onOrderComplete, onCancel }: {
   onOrderComplete: (order: Order, emailNotificationSent: boolean) => void;
   onCancel: () => void;
@@ -27,6 +42,15 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
     fetch('/api/config').then(r => r.json()).then(setConfig);
   }, []);
 
+  React.useEffect(() => {
+    window.fbq?.('track', 'InitiateCheckout', {
+      content_ids: ['MI-20W-CAR-CHARGER'],
+      content_type: 'product',
+      value: price,
+      currency: 'COP',
+    });
+  }, []);
+
   const f = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm({ ...form, [k]: e.target.value });
 
@@ -34,6 +58,8 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
     e.preventDefault();
     setLoading(true);
     try {
+      const fbp = getCookie('_fbp');
+      const fbc = getCookie('_fbc');
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,18 +71,22 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
           customerCity: form.city,
           amount: price * form.quantity,
           items: [{ name: 'Mi 20W Wireless Car Charger', price, quantity: form.quantity }],
-          paymentMethod: paymentMethod === 'wompi' ? 'Wompi' : paymentMethod === 'pse' ? 'PSE/Addi' : 'Contra entrega'
+          paymentMethod: paymentMethod === 'wompi' ? 'Wompi' : paymentMethod === 'pse' ? 'PSE/Addi' : 'Contra entrega',
+          fbp,
+          fbc
         })
       });
       const data = await res.json();
       if (!data.success) { alert(data.error || 'Error'); setLoading(false); return; }
 
       if (paymentMethod === 'contraentrega') {
+        trackPurchase(data.order.id, data.wompi.reference, price * form.quantity);
         onOrderComplete(data.order, false);
         return;
       }
 
       if (!config?.hasWompiConfig || !window.WidgetCheckout) {
+        trackPurchase(data.order.id, data.wompi.reference, price * form.quantity);
         onOrderComplete(data.order, false);
         return;
       }
@@ -71,8 +101,12 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
         customerData: { email: form.email, fullName: `${form.name} ${form.lastName}`.trim(), phoneNumber: form.phone, phoneNumberPrefix: '+57' }
       });
       checkout.open((result: any) => {
-        if (result?.transaction?.status === 'APPROVED') onOrderComplete({ ...data.order, status: 'APPROVED' }, true);
-        else onOrderComplete(data.order, false);
+        if (result?.transaction?.status === 'APPROVED') {
+          trackPurchase(data.order.id, data.wompi.reference, price * form.quantity);
+          onOrderComplete({ ...data.order, status: 'APPROVED' }, true);
+        } else {
+          onOrderComplete(data.order, false);
+        }
       });
     } catch {
       alert('Error al procesar el pago');

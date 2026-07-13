@@ -14,6 +14,8 @@ Este repo quedó preparado para desplegar frontend (Vite) + funciones API nativa
 - `RESEND_API_KEY=re_...`
 - `RESEND_FROM_EMAIL=ventas@xiaomicartech.com.co`
 - `RESEND_ADMIN_EMAIL=ventas@xiaomicartech.com.co`
+- `META_CAPI_ACCESS_TOKEN=...` (Events Manager > Pixel `1340466854817903` > Configuracion > Conversions API > Generar token de acceso)
+- `META_TEST_EVENT_CODE=...` (opcional, solo para verificar en Events Manager > Test Events; quitar en producción una vez confirmado)
 
 > Si usas un dominio alterno temporal de Vercel, actualiza `APP_URL` al dominio activo y luego vuelve a `https://xiaomicartech.com.co` cuando conectes el dominio final.
 
