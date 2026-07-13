@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { Resend } from "resend";
-import { sendMetaPurchaseEvent, getClientIp } from "./metaCapi";
+import { sendMetaPurchaseEvent, getClientIp } from "./metaCapi.js";
 
 dotenv.config();
 

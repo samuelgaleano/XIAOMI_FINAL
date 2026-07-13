@@ -4,8 +4,8 @@
     { 
       "src": "api_index.ts", 
       "use": "@vercel/node",
-      "config": { 
-        "includeFiles": ["server.ts"],
+      "config": {
+        "includeFiles": ["server.ts", "metaCapi.ts"],
         "bundle": true
       }
     },

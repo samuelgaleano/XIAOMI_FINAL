@@ -4,7 +4,7 @@ import fs from "fs";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import { Resend } from "resend";
-import { sendMetaPurchaseEvent, getClientIp } from "./metaCapi";
+import { sendMetaPurchaseEvent, getClientIp } from "./metaCapi.js";
 
 dotenv.config();
 
