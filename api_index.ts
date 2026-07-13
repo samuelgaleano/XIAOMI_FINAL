@@ -53,6 +53,21 @@ app.get("/api/config", (req: any, res: any) => {
   res.json({ wompiPublicKey, appUrl, hasWompiConfig: !!(wompiPublicKey && wompiIntegritySecret), emailConfigurationActive: !!resendClient });
 });
 
+app.get("/api/health/integrations", (req: any, res: any) => {
+  res.json({
+    wompi: {
+      publicKeyConfigured: !!wompiPublicKey,
+      integritySecretConfigured: !!wompiIntegritySecret,
+      eventsSecretConfigured: !!wompiEventsSecret
+    },
+    resend: {
+      apiKeyConfigured: !!resendApiKey,
+      fromEmail: resendFromEmail,
+      adminEmail: resendAdminEmail
+    }
+  });
+});
+
 app.get("/api/orders", (req: any, res: any) => {
   const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   res.json(sorted);
