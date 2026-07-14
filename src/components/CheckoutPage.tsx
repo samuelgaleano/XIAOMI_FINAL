@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight, ShoppingBag, Lock, Truck, CreditCard, Smartphone, Building2 } from "lucide-react";
+import { ChevronRight, ChevronDown, ShoppingBag, Lock, Truck, CreditCard, Smartphone, Building2 } from "lucide-react";
 import { Order } from "../types";
 import { formatCOP } from "../lib/format";
 
@@ -33,6 +33,7 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
     address: "", addressExtra: "", city: "Bogotá", departamento: "Cundinamarca", quantity: 1
   });
   const [loading, setLoading] = React.useState(false);
+  const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [sameBilling, setSameBilling] = React.useState(true);
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("wompi");
   const [config, setConfig] = React.useState<{ wompiPublicKey: string; hasWompiConfig: boolean } | null>(null);
@@ -284,8 +285,23 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
             </button>
           </form>
 
-          {/* COLUMNA DERECHA — Resumen del pedido */}
+          {/* COLUMNA DERECHA — Resumen del pedido (colapsable en móvil) */}
           <aside className="order-1 lg:order-2 lg:sticky lg:top-6 bg-white rounded-2xl p-6">
+            <button
+              type="button"
+              onClick={() => setSummaryOpen(!summaryOpen)}
+              className="lg:hidden w-full flex items-center justify-between cursor-pointer"
+              aria-expanded={summaryOpen}
+            >
+              <span className="flex items-center gap-2 text-sm font-medium text-mi-text">
+                <ShoppingBag className="w-4 h-4" />
+                {summaryOpen ? 'Ocultar resumen del pedido' : 'Mostrar resumen del pedido'}
+                <ChevronDown className={`w-4 h-4 transition-transform ${summaryOpen ? 'rotate-180' : ''}`} />
+              </span>
+              <span className="text-base font-semibold text-ink">{formatCOP(total)}</span>
+            </button>
+
+            <div className={`${summaryOpen ? 'block' : 'hidden'} lg:block mt-5 lg:mt-0`}>
             {/* Producto */}
             <div className="flex gap-4 pb-5 border-b border-line">
               <div className="relative shrink-0">
@@ -349,6 +365,7 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
                   {text}
                 </div>
               ))}
+            </div>
             </div>
           </aside>
         </div>
