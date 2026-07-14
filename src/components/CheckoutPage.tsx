@@ -1,6 +1,7 @@
 import React from "react";
-import { ChevronRight, ShoppingBag, Lock, Truck, CreditCard, Smartphone, Building2 } from "lucide-react";
+import { ChevronRight, ChevronDown, ShoppingBag, Lock, Truck, CreditCard, Smartphone, Building2 } from "lucide-react";
 import { Order } from "../types";
+import { formatCOP } from "../lib/format";
 
 declare global { interface Window { WidgetCheckout: any; } }
 
@@ -32,6 +33,7 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
     address: "", addressExtra: "", city: "Bogotá", departamento: "Cundinamarca", quantity: 1
   });
   const [loading, setLoading] = React.useState(false);
+  const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [sameBilling, setSameBilling] = React.useState(true);
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("wompi");
   const [config, setConfig] = React.useState<{ wompiPublicKey: string; hasWompiConfig: boolean } | null>(null);
@@ -115,263 +117,259 @@ export default function CheckoutPage({ onOrderComplete, onCancel }: {
   };
 
   const total = price * form.quantity;
-  const savings = (originalPrice - price) * form.quantity;
+  const listTotal = originalPrice * form.quantity;
+  const savings = listTotal - total;
+
+  const inputClass = "w-full rounded-lg border border-line bg-white px-3.5 py-3 text-base text-body placeholder:text-faint focus:border-mi";
 
   return (
-    <div style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", background: '#fff', minHeight: '100vh' }}>
-      {/* Header */}
-      <header style={{ borderBottom: '1px solid #e5e5e5', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', fontWeight: '700', letterSpacing: '-0.5px', color: '#111' }}>
-          XIAOMI CARTECH
+    <div className="bg-paper min-h-screen">
+      {/* Encabezado minimal de pago */}
+      <header className="bg-white border-b border-line px-5 py-2.5 flex items-center justify-between">
+        <button onClick={onCancel} className="cursor-pointer" aria-label="Volver al inicio">
+          <img src="/xiaomi-cartech-logo.png" alt="Xiaomi CarTech" className="h-12 w-auto block" />
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#666' }}>
-          <Lock style={{ width: 14, height: 14 }} />
+        <div className="flex items-center gap-1.5 text-[13px] text-muted">
+          <Lock className="w-3.5 h-3.5" />
           Pago seguro
         </div>
       </header>
 
-      {/* Breadcrumb */}
-      <div style={{ padding: '12px 24px', fontSize: '13px', color: '#999', display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '1100px', margin: '0 auto' }}>
-        <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E8521A', fontSize: '13px' }}>Inicio</button>
-        <ChevronRight style={{ width: 14, height: 14 }} />
-        <span style={{ color: '#333' }}>Finalizar compra</span>
-      </div>
+      <div className="max-w-mi mx-auto px-5">
+        {/* Miga de pan */}
+        <div className="py-3.5 text-[13px] text-faint flex items-center gap-1.5">
+          <button onClick={onCancel} className="text-mi-text hover:text-mi-dark cursor-pointer">Inicio</button>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-body">Finalizar compra</span>
+        </div>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px 60px', display: 'grid', gridTemplateColumns: '1fr 420px', gap: '60px', alignItems: 'start' }}>
+        <div className="pb-16 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 lg:gap-8 items-start">
 
-        {/* LEFT COLUMN - Form */}
-        <form onSubmit={pay}>
-          {/* Contact */}
-          <section style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111', margin: 0 }}>Contacto</h2>
-              <span style={{ fontSize: '13px', color: '#999' }}>¿Ya tienes cuenta? <span style={{ color: '#E8521A', cursor: 'pointer' }}>Inicia sesión</span></span>
-            </div>
-            <input required type="email" placeholder="Email o número de teléfono móvil"
-              value={form.email} onChange={f('email')}
-              style={inputStyle} />
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', fontSize: '13px', color: '#555', cursor: 'pointer' }}>
-              <input type="checkbox" defaultChecked style={{ accentColor: '#E8521A' }} />
-              Enviarme novedades y ofertas por correo electrónico
-            </label>
-          </section>
+          {/* COLUMNA IZQUIERDA — Formulario */}
+          <form onSubmit={pay} className="order-2 lg:order-1 space-y-5">
 
-          {/* Delivery */}
-          <section style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111', marginBottom: '16px' }}>Entrega</h2>
-            <div style={{ border: '1px solid #d9d9d9', borderRadius: '8px', overflow: 'hidden' }}>
-              <select value={form.departamento} onChange={f('departamento')} style={{ ...inputStyle, border: 'none', borderBottom: '1px solid #d9d9d9', borderRadius: 0, background: '#fafafa' }}>
-                <option>Cundinamarca</option>
-                <option>Antioquia</option>
-                <option>Valle del Cauca</option>
-                <option>Atlántico</option>
-                <option>Bolívar</option>
-                <option>Santander</option>
-                <option>Otro</option>
-              </select>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-                <input required placeholder="Nombre" value={form.name} onChange={f('name')}
-                  style={{ ...inputStyle, border: 'none', borderBottom: '1px solid #d9d9d9', borderRight: '1px solid #d9d9d9', borderRadius: 0 }} />
-                <input required placeholder="Apellidos" value={form.lastName} onChange={f('lastName')}
-                  style={{ ...inputStyle, border: 'none', borderBottom: '1px solid #d9d9d9', borderRadius: 0 }} />
-              </div>
-              <input required placeholder="Cédula" value={form.cedula} onChange={f('cedula')}
-                style={{ ...inputStyle, border: 'none', borderBottom: '1px solid #d9d9d9', borderRadius: 0 }} />
-              <input required placeholder="Dirección" value={form.address} onChange={f('address')}
-                style={{ ...inputStyle, border: 'none', borderBottom: '1px solid #d9d9d9', borderRadius: 0 }} />
-              <input placeholder="Casa, apartamento, etc. (opcional)" value={form.addressExtra} onChange={f('addressExtra')}
-                style={{ ...inputStyle, border: 'none', borderBottom: '1px solid #d9d9d9', borderRadius: 0 }} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0 }}>
-                <input required placeholder="Ciudad" value={form.city} onChange={f('city')}
-                  style={{ ...inputStyle, border: 'none', borderRight: '1px solid #d9d9d9', borderRadius: 0 }} />
-                <select style={{ ...inputStyle, border: 'none', borderRight: '1px solid #d9d9d9', borderRadius: 0, background: '#fafafa', fontSize: '13px', color: '#333' }}>
-                  <option>Bogotá</option>
-                  <option>Medellín</option>
-                  <option>Cali</option>
+            {/* Contacto */}
+            <section className="bg-white rounded-2xl p-6">
+              <h2 className="text-lg font-semibold text-ink mb-4">Contacto</h2>
+              <input required type="email" placeholder="Correo electrónico"
+                value={form.email} onChange={f('email')}
+                className={inputClass} />
+              <label className="flex items-center gap-2 mt-3 text-[13px] text-body cursor-pointer">
+                <input type="checkbox" style={{ accentColor: '#ff6900', width: 16, height: 16 }} />
+                Enviarme novedades y ofertas por correo electrónico
+              </label>
+            </section>
+
+            {/* Entrega */}
+            <section className="bg-white rounded-2xl p-6">
+              <h2 className="text-lg font-semibold text-ink mb-4">Entrega</h2>
+              <div className="space-y-2.5">
+                <select value={form.departamento} onChange={f('departamento')} className={inputClass} aria-label="Departamento">
+                  <option>Cundinamarca</option>
+                  <option>Antioquia</option>
+                  <option>Valle del Cauca</option>
+                  <option>Atlántico</option>
+                  <option>Bolívar</option>
+                  <option>Santander</option>
+                  <option>Otro</option>
                 </select>
-                <input placeholder="Código postal (opc.)" style={{ ...inputStyle, border: 'none', borderRadius: 0 }} />
-              </div>
-            </div>
-            <input required placeholder="Teléfono" value={form.phone} onChange={f('phone')}
-              style={{ ...inputStyle, marginTop: '8px' }} />
-          </section>
-
-          {/* Shipping */}
-          <section style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111', marginBottom: '16px' }}>Métodos de envío</h2>
-            <div style={{ border: '2px solid #111', borderRadius: '8px', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafafa' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Truck style={{ width: 18, height: 18, color: '#E8521A' }} />
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>Envío Nacional</span>
-              </div>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#16a34a' }}>GRATIS</span>
-            </div>
-          </section>
-
-          {/* Payment */}
-          <section style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111', marginBottom: '16px' }}>Pago</h2>
-            <p style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>Todas las transacciones son seguras y están encriptadas.</p>
-
-            {/* Wompi */}
-            <div style={{ border: paymentMethod === 'wompi' ? '2px solid #111' : '1px solid #d9d9d9', borderRadius: '8px 8px 0 0', padding: '14px 16px', cursor: 'pointer', background: paymentMethod === 'wompi' ? '#fafafa' : '#fff' }}
-              onClick={() => setPaymentMethod('wompi')}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={radioStyle(paymentMethod === 'wompi')} />
-                  <CreditCard style={{ width: 16, height: 16, color: '#555' }} />
-                  <span style={{ fontSize: '14px', fontWeight: '500' }}>Wompi</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <input required placeholder="Nombre" value={form.name} onChange={f('name')} className={inputClass} />
+                  <input required placeholder="Apellidos" value={form.lastName} onChange={f('lastName')} className={inputClass} />
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {['VISA', 'MC', 'AMEX', '+4'].map(c => (
-                    <span key={c} style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', fontWeight: '600', color: '#555', background: '#fff' }}>{c}</span>
-                  ))}
+                <input required placeholder="Cédula" value={form.cedula} onChange={f('cedula')} className={inputClass} />
+                <input required placeholder="Dirección" value={form.address} onChange={f('address')} className={inputClass} />
+                <input placeholder="Casa, apartamento, etc. (opcional)" value={form.addressExtra} onChange={f('addressExtra')} className={inputClass} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <input required placeholder="Ciudad" value={form.city} onChange={f('city')} className={inputClass} />
+                  <input placeholder="Código postal (opcional)" className={inputClass} />
                 </div>
+                <input required placeholder="Teléfono" type="tel" value={form.phone} onChange={f('phone')} className={inputClass} />
               </div>
-              {paymentMethod === 'wompi' && (
-                <p style={{ fontSize: '13px', color: '#666', marginTop: '10px', marginLeft: '26px' }}>
-                  Se te redirigirá a Wompi para que completes la compra.
-                </p>
-              )}
-            </div>
 
-            {/* PSE */}
-            <div style={{ border: paymentMethod === 'pse' ? '2px solid #111' : '1px solid #d9d9d9', borderTop: 'none', padding: '14px 16px', cursor: 'pointer', background: paymentMethod === 'pse' ? '#fafafa' : '#fff' }}
-              onClick={() => setPaymentMethod('pse')}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={radioStyle(paymentMethod === 'pse')} />
-                  <Building2 style={{ width: 16, height: 16, color: '#555' }} />
-                  <span style={{ fontSize: '14px', fontWeight: '500' }}>Paga a Crédito o Débito con PSE</span>
+              {/* Método de envío */}
+              <h3 className="text-sm font-semibold text-ink mt-6 mb-3">Método de envío</h3>
+              <div className="border-2 border-mi rounded-lg px-4 py-3.5 flex justify-between items-center bg-mi-soft/40">
+                <div className="flex items-center gap-2.5">
+                  <Truck className="w-4.5 h-4.5 text-mi-text" />
+                  <span className="text-sm font-medium text-ink">Envío nacional (2–5 días hábiles)</span>
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <span style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', fontWeight: '600', color: '#2563eb', background: '#fff' }}>Addi</span>
-                  <span style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', fontWeight: '600', color: '#16a34a', background: '#fff' }}>PSE</span>
-                </div>
+                <span className="text-sm font-semibold text-mi-text">Gratis</span>
               </div>
-            </div>
+            </section>
 
-            {/* Contra entrega */}
-            <div style={{ border: paymentMethod === 'contraentrega' ? '2px solid #111' : '1px solid #d9d9d9', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '14px 16px', cursor: 'pointer', background: paymentMethod === 'contraentrega' ? '#fafafa' : '#fff' }}
-              onClick={() => setPaymentMethod('contraentrega')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={radioStyle(paymentMethod === 'contraentrega')} />
-                <Smartphone style={{ width: 16, height: 16, color: '#555' }} />
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>Pago contra entrega</span>
+            {/* Pago */}
+            <section className="bg-white rounded-2xl p-6">
+              <h2 className="text-lg font-semibold text-ink mb-1.5">Pago</h2>
+              <p className="text-[13px] text-muted mb-4">Todas las transacciones son seguras y están encriptadas.</p>
+
+              <div className="rounded-lg border border-line overflow-hidden divide-y divide-line" role="radiogroup" aria-label="Método de pago">
+                {[
+                  {
+                    id: 'wompi' as PaymentMethod,
+                    icon: <CreditCard className="w-4 h-4 text-body" />,
+                    label: 'Tarjetas, Nequi y más (Wompi)',
+                    badges: ['Visa', 'MC', 'Amex', '+4'],
+                    note: 'Se te redirigirá a Wompi para completar el pago.',
+                  },
+                  {
+                    id: 'pse' as PaymentMethod,
+                    icon: <Building2 className="w-4 h-4 text-body" />,
+                    label: 'Débito bancario PSE o crédito Addi',
+                    badges: ['PSE', 'Addi'],
+                  },
+                  {
+                    id: 'contraentrega' as PaymentMethod,
+                    icon: <Smartphone className="w-4 h-4 text-body" />,
+                    label: 'Pago contra entrega',
+                    badges: [],
+                    note: 'Pagas en efectivo o transferencia al recibir el producto.',
+                  },
+                ].map(({ id, icon, label, badges, note }) => (
+                  <label
+                    key={id}
+                    className={`block px-4 py-3.5 cursor-pointer transition-colors ${paymentMethod === id ? 'bg-mi-soft/40' : 'bg-white hover:bg-paper/60'}`}
+                  >
+                    <div className="flex justify-between items-center gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={id}
+                          checked={paymentMethod === id}
+                          onChange={() => setPaymentMethod(id)}
+                          style={{ accentColor: '#ff6900', width: 18, height: 18 }}
+                        />
+                        {icon}
+                        <span className="text-sm font-medium text-ink">{label}</span>
+                      </div>
+                      <div className="hidden sm:flex gap-1.5">
+                        {badges.map(b => (
+                          <span key={b} className="border border-line rounded px-1.5 py-0.5 text-[11px] font-medium text-muted bg-white">{b}</span>
+                        ))}
+                      </div>
+                    </div>
+                    {note && paymentMethod === id && (
+                      <p className="text-[13px] text-muted mt-2 ml-[30px]">{note}</p>
+                    )}
+                  </label>
+                ))}
               </div>
-            </div>
-          </section>
+            </section>
 
-          {/* Billing address */}
-          <section style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111', marginBottom: '16px' }}>Dirección de facturación</h2>
-            <div style={{ border: '1px solid #d9d9d9', borderRadius: '8px', overflow: 'hidden' }}>
-              <div style={{ padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: sameBilling ? 'none' : '1px solid #d9d9d9', background: sameBilling ? '#fafafa' : '#fff' }}
-                onClick={() => setSameBilling(true)}>
-                <div style={radioStyle(sameBilling)} />
-                <span style={{ fontSize: '14px' }}>La misma dirección de envío</span>
+            {/* Dirección de facturación */}
+            <section className="bg-white rounded-2xl p-6">
+              <h2 className="text-lg font-semibold text-ink mb-4">Dirección de facturación</h2>
+              <div className="rounded-lg border border-line overflow-hidden divide-y divide-line" role="radiogroup" aria-label="Dirección de facturación">
+                {[
+                  { value: true, label: 'La misma dirección de envío' },
+                  { value: false, label: 'Usar una dirección de facturación distinta' },
+                ].map(({ value, label }) => (
+                  <label key={label} className={`flex items-center gap-2.5 px-4 py-3.5 cursor-pointer transition-colors ${sameBilling === value ? 'bg-mi-soft/40' : 'bg-white hover:bg-paper/60'}`}>
+                    <input
+                      type="radio"
+                      name="billing"
+                      checked={sameBilling === value}
+                      onChange={() => setSameBilling(value)}
+                      style={{ accentColor: '#ff6900', width: 18, height: 18 }}
+                    />
+                    <span className="text-sm text-ink">{label}</span>
+                  </label>
+                ))}
               </div>
-              <div style={{ padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', background: !sameBilling ? '#fafafa' : '#fff' }}
-                onClick={() => setSameBilling(false)}>
-                <div style={radioStyle(!sameBilling)} />
-                <span style={{ fontSize: '14px' }}>Usar una dirección de facturación distinta</span>
-              </div>
-            </div>
-          </section>
+            </section>
 
-          <button type="submit" disabled={loading}
-            style={{ width: '100%', background: loading ? '#999' : '#111', color: '#fff', border: 'none', borderRadius: '8px', padding: '16px', fontSize: '16px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>
-            {loading ? 'Procesando...' : 'Pagar ahora'}
-          </button>
-        </form>
-
-        {/* RIGHT COLUMN - Order Summary */}
-        <aside style={{ position: 'sticky', top: '24px', background: '#f5f5f5', borderRadius: '12px', padding: '28px', borderLeft: '1px solid #e5e5e5' }}>
-          {/* Product */}
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0' }}>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <img src={PRODUCT_IMAGE} alt="Mi 20W Wireless Car Charger"
-                style={{ width: '72px', height: '72px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd', background: '#fff' }} />
-              <span style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#555', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {form.quantity}
-              </span>
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: '14px', fontWeight: '500', color: '#111', margin: '0 0 4px' }}>Mi 20W Wireless Car Charger</p>
-              <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Xiaomi CarTech</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                <label style={{ fontSize: '12px', color: '#666' }}>Cant:</label>
-                <select value={form.quantity} onChange={e => setForm({ ...form, quantity: Number(e.target.value) })}
-                  style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '2px 6px', fontSize: '13px', background: '#fff' }}>
-                  {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </div>
-            </div>
-            <p style={{ fontSize: '14px', fontWeight: '600', color: '#111', whiteSpace: 'nowrap' }}>
-              ${total.toLocaleString('es-CO')}
-            </p>
-          </div>
-
-          {/* Discount code */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0' }}>
-            <input placeholder="Código de descuento o tarjeta de regalo"
-              style={{ flex: 1, border: '1px solid #d9d9d9', borderRadius: '6px', padding: '10px 12px', fontSize: '13px', background: '#fff' }} />
-            <button type="button" style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '10px 16px', fontSize: '13px', fontWeight: '500', background: '#fff', cursor: 'pointer', color: '#555' }}>
-              Aplicar
+            <button type="submit" disabled={loading}
+              className={`w-full h-[52px] rounded-lg text-white text-base font-semibold transition-colors ${loading ? 'bg-faint cursor-not-allowed' : 'bg-mi hover:bg-mi-dark cursor-pointer'}`}>
+              {loading ? 'Procesando…' : 'Pagar ahora'}
             </button>
-          </div>
+          </form>
 
-          {/* Totals */}
-          <div style={{ fontSize: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#555' }}>
-              <span>Subtotal ({form.quantity} {form.quantity === 1 ? 'artículo' : 'artículos'})</span>
-              <span>${total.toLocaleString('es-CO')}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#555' }}>
-              <span>Envío</span>
-              <span style={{ color: '#16a34a', fontWeight: '600' }}>GRATIS</span>
-            </div>
-            {savings > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#E8521A' }}>
-                <span>Descuento aplicado</span>
-                <span>-${savings.toLocaleString('es-CO')}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid #e0e0e0', fontWeight: '700', fontSize: '16px', color: '#111' }}>
-              <span>Total</span>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '12px', fontWeight: '400', color: '#888', marginRight: '6px' }}>COP</span>
-                <span>${total.toLocaleString('es-CO')},00</span>
-              </div>
-            </div>
-          </div>
+          {/* COLUMNA DERECHA — Resumen del pedido (colapsable en móvil) */}
+          <aside className="order-1 lg:order-2 lg:sticky lg:top-6 bg-white rounded-2xl p-6">
+            <button
+              type="button"
+              onClick={() => setSummaryOpen(!summaryOpen)}
+              className="lg:hidden w-full flex items-center justify-between cursor-pointer"
+              aria-expanded={summaryOpen}
+            >
+              <span className="flex items-center gap-2 text-sm font-medium text-mi-text">
+                <ShoppingBag className="w-4 h-4" />
+                {summaryOpen ? 'Ocultar resumen del pedido' : 'Mostrar resumen del pedido'}
+                <ChevronDown className={`w-4 h-4 transition-transform ${summaryOpen ? 'rotate-180' : ''}`} />
+              </span>
+              <span className="text-base font-semibold text-ink">{formatCOP(total)}</span>
+            </button>
 
-          {/* Trust badges */}
-          <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[
-              { icon: <Lock style={{ width: 14, height: 14 }} />, text: 'Pago 100% seguro y encriptado' },
-              { icon: <Truck style={{ width: 14, height: 14 }} />, text: 'Envío gratis a todo Colombia' },
-              { icon: <ShoppingBag style={{ width: 14, height: 14 }} />, text: 'Garantía oficial Xiaomi' },
-            ].map(({ icon, text }) => (
-              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#666' }}>
-                <span style={{ color: '#E8521A' }}>{icon}</span>
-                {text}
+            <div className={`${summaryOpen ? 'block' : 'hidden'} lg:block mt-5 lg:mt-0`}>
+            {/* Producto */}
+            <div className="flex gap-4 pb-5 border-b border-line">
+              <div className="relative shrink-0">
+                <img src={PRODUCT_IMAGE} alt="Mi 20W Wireless Car Charger"
+                  className="w-[72px] h-[72px] object-cover rounded-lg border border-line bg-paper" />
+                <span className="absolute -top-2 -right-2 bg-mi text-white rounded-full w-5 h-5 text-xs font-bold flex items-center justify-center">
+                  {form.quantity}
+                </span>
               </div>
-            ))}
-          </div>
-        </aside>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-ink">Mi 20W Wireless Car Charger</p>
+                <p className="text-[13px] text-muted">Xiaomi CarTech</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <label htmlFor="qty" className="text-xs text-muted">Cantidad:</label>
+                  <select id="qty" value={form.quantity} onChange={e => setForm({ ...form, quantity: Number(e.target.value) })}
+                    className="border border-line rounded-lg px-3 py-2 text-base bg-white min-h-11">
+                    {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-ink whitespace-nowrap">{formatCOP(total)}</p>
+            </div>
+
+            {/* Código de descuento */}
+            <div className="flex gap-2 py-5 border-b border-line">
+              <input placeholder="Código de descuento" className={`${inputClass} flex-1 text-sm`} />
+              <button type="button" className="border border-line rounded-lg px-4 text-sm font-medium bg-white text-body hover:border-ink transition-colors cursor-pointer">
+                Aplicar
+              </button>
+            </div>
+
+            {/* Totales */}
+            <div className="pt-5 text-sm space-y-2.5">
+              <div className="flex justify-between text-body">
+                <span>Precio de lista ({form.quantity} {form.quantity === 1 ? 'artículo' : 'artículos'})</span>
+                <span className="line-through text-muted">{formatCOP(listTotal)}</span>
+              </div>
+              <div className="flex justify-between text-mi-text font-medium">
+                <span>Descuento de lanzamiento</span>
+                <span>−{formatCOP(savings)}</span>
+              </div>
+              <div className="flex justify-between text-body">
+                <span>Envío</span>
+                <span className="font-medium text-mi-text">Gratis</span>
+              </div>
+              <div className="flex justify-between items-baseline pt-3.5 border-t border-line font-semibold text-base text-ink">
+                <span>Total</span>
+                <span>{formatCOP(total)} <span className="text-xs font-normal text-muted">COP</span></span>
+              </div>
+            </div>
+
+            {/* Confianza */}
+            <div className="mt-5 pt-5 border-t border-line space-y-2">
+              {[
+                { icon: <Lock className="w-3.5 h-3.5" />, text: 'Pago 100% seguro y encriptado' },
+                { icon: <Truck className="w-3.5 h-3.5" />, text: 'Envío gratis a todo Colombia' },
+                { icon: <ShoppingBag className="w-3.5 h-3.5" />, text: 'Garantía oficial Xiaomi de 12 meses' },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-center gap-2 text-xs text-muted">
+                  <span className="text-mi-text">{icon}</span>
+                  {text}
+                </div>
+              ))}
+            </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', border: '1px solid #d9d9d9',
-  borderRadius: '6px', fontSize: '14px', color: '#333', outline: 'none',
-  boxSizing: 'border-box', background: '#fff'
-};
-
-const radioStyle = (active: boolean): React.CSSProperties => ({
-  width: '18px', height: '18px', borderRadius: '50%', border: active ? '5px solid #111' : '2px solid #bbb',
-  flexShrink: 0, transition: 'all 0.15s'
-});

@@ -5,7 +5,7 @@ import CheckoutPage from "./components/CheckoutPage";
 import SuccessPage from "./components/SuccessPage";
 import AdminPanel from "./components/AdminPanel";
 import { Order } from "./types";
-import { MessageCircle, ShoppingBag } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 
 export default function App() {
   const [currentTab, setCurrentTab] = React.useState<"home" | "admin" | "checkout">("home");
@@ -35,6 +35,18 @@ export default function App() {
   // Load orders on startup
   React.useEffect(() => {
     fetchOrders();
+  }, []);
+
+  // Acceso al panel administrador por URL (#admin), sin enlaces en la UI pública
+  React.useEffect(() => {
+    const syncAdminFromHash = () => {
+      if (window.location.hash === "#admin") {
+        setCurrentTab("admin");
+      }
+    };
+    syncAdminFromHash();
+    window.addEventListener("hashchange", syncAdminFromHash);
+    return () => window.removeEventListener("hashchange", syncAdminFromHash);
   }, []);
 
   // Update specific order status in backend (Admin actions)
@@ -92,22 +104,24 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/20 text-gray-800 selection:bg-amber-100 selection:text-amber-950 flex flex-col justify-between">
+    <div className="min-h-screen bg-white text-body selection:bg-mi-soft selection:text-mi-dark flex flex-col justify-between">
       
-      {/* Interactive Navigation bar */}
-      <Navigation 
-        currentTab={currentTab === "admin" ? "admin" : "home"}
-        setCurrentTab={(tab) => {
-          if (tab === "admin") {
-            setCurrentTab("admin");
-          } else {
-            setCurrentTab("home");
-          }
-        }}
-        onOpenCheckout={() => setCurrentTab("checkout")}
-        adminLoggedIn={orders.length > 0} // visual helper
-        onLogoutAdmin={() => {}}
-      />
+      {/* Interactive Navigation bar — el checkout usa su propio encabezado minimal */}
+      {currentTab !== "checkout" && !completedOrder && (
+        <Navigation
+          currentTab={currentTab === "admin" ? "admin" : "home"}
+          setCurrentTab={(tab) => {
+            if (tab === "admin") {
+              setCurrentTab("admin");
+            } else {
+              setCurrentTab("home");
+            }
+          }}
+          onOpenCheckout={() => setCurrentTab("checkout")}
+          adminLoggedIn={orders.length > 0} // visual helper
+          onLogoutAdmin={() => {}}
+        />
+      )}
 
       {/* Main Body */}
       <main className="flex-1">
@@ -134,56 +148,79 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer bar */}
-      <footer className="bg-gray-900 text-white font-normal text-xs py-12 border-t border-gray-800 text-left">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-          
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-1.5">
-              <img src="/xiaomi-cartech-logo.png" alt="Xiaomi CarTech" className="h-12 w-auto brightness-0 invert" />
-            </div>
-            <p className="text-gray-400 leading-relaxed max-w-sm">
-              Somos importadores autorizados independientes del Mi 20W Wireless Car Charger. Garantizamos calidad premium, empaque de fábrica y soporte de entrega garantizado con las mejores pasarelas de pago del país.
+      {/* Footer — estructura de columnas estilo mi.com */}
+      <footer className="bg-white border-t border-line text-left">
+        <div className="max-w-mi mx-auto px-5 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+
+          <div className="col-span-2 md:col-span-1 space-y-4">
+            <img src="/xiaomi-cartech-logo.png" alt="Xiaomi CarTech" className="h-14 w-auto" />
+            <p className="text-xs text-muted leading-relaxed max-w-xs">
+              Distribuidor autorizado independiente del Mi 20W Wireless Car Charger en
+              Colombia. Producto original, empaque sellado de fábrica y garantía oficial.
             </p>
           </div>
 
           <div>
-            <h4 className="font-bold text-white uppercase tracking-wider text-[11px] mb-4">Medios De Pago</h4>
-            <div className="flex flex-wrap gap-2 text-gray-400 font-semibold font-mono">
-              <span className="bg-gray-800 py-1 px-2.5 rounded text-[10px]">Wompi</span>
-              <span className="bg-gray-800 py-1 px-2.5 rounded text-[10px]">Bold Col</span>
-              <span className="bg-gray-800 py-1 px-2.5 rounded text-[10px]">Efipay</span>
-              <span className="bg-gray-800 py-1 px-2.5 rounded text-[10px]">Nequi</span>
-              <span className="bg-gray-800 py-1 px-2.5 rounded text-[10px]">PSE/Brebv</span>
-            </div>
+            <h4 className="font-semibold text-ink text-sm mb-4">Producto</h4>
+            <ul className="space-y-2.5 text-xs text-muted">
+              <li><a href="#features" className="hover:text-mi transition-colors">Características</a></li>
+              <li><a href="#specs" className="hover:text-mi transition-colors">Especificaciones</a></li>
+              <li><a href="#reviews" className="hover:text-mi transition-colors">Reseñas</a></li>
+              <li>
+                <button onClick={() => setCurrentTab("checkout")} className="hover:text-mi transition-colors cursor-pointer">
+                  Comprar ahora
+                </button>
+              </li>
+            </ul>
           </div>
 
           <div>
-            <h4 className="font-bold text-white uppercase tracking-wider text-[11px] mb-4">Atención al Cliente</h4>
-            <p className="text-gray-400">
-              ¿Dudas con tu despacho? Escríbenos en cualquier momento vía WhatsApp para soporte directo.
-            </p>
-            <a 
-              href="https://wa.me/573000000000?text=Hola%2C%20necesito%20asistencia%20respecto%20a%20mi%20pedido."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl items-center gap-1.5 duration-150 transition-all text-xs"
-              id="wa-footer-btn"
-            >
-              <MessageCircle className="w-4 h-4 fill-white" />
-              Chatear por WhatsApp
-            </a>
+            <h4 className="font-semibold text-ink text-sm mb-4">Soporte</h4>
+            <ul className="space-y-2.5 text-xs text-muted">
+              <li>
+                <a
+                  href="https://wa.me/573000000000?text=Hola%2C%20necesito%20asistencia%20respecto%20a%20mi%20pedido."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 hover:text-mi transition-colors"
+                  id="wa-footer-btn"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  WhatsApp en vivo
+                </a>
+              </li>
+              <li><a href="mailto:ventas@xiaomicartech.com.co" className="hover:text-mi transition-colors break-all">ventas@xiaomicartech.com.co</a></li>
+              <li>Garantía oficial de 12 meses</li>
+              <li>Envíos a todo el país en 2–5 días</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-ink text-sm mb-4">Medios de pago</h4>
+            <div className="flex flex-wrap gap-1.5">
+              {["Wompi", "PSE", "Nequi", "Bold", "Visa", "Mastercard"].map((m) => (
+                <span key={m} className="border border-line text-muted py-1 px-2.5 rounded text-[11px] font-medium">
+                  {m}
+                </span>
+              ))}
+            </div>
+            <h4 className="font-semibold text-ink text-sm mb-3 mt-6">Legal</h4>
+            <ul className="space-y-2.5 text-xs text-muted">
+              <li><a href="/privacidad.html" className="hover:text-mi transition-colors">Política de privacidad</a></li>
+              <li><a href="/terminos.html" className="hover:text-mi transition-colors">Términos y condiciones</a></li>
+              <li><a href="/eliminacion-de-datos.html" className="hover:text-mi transition-colors">Eliminación de datos</a></li>
+            </ul>
           </div>
 
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-800/60 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 font-medium text-[11px]">
-          <p>© 2026 Todos los derechos reservados. Xiaomi CarTech Colombia (xiaomicartech.com.co) - Importador Independiente.</p>
-          <div className="flex gap-4">
-            <a href="#features" className="hover:text-white transition">Características</a>
-            <a href="#specs" className="hover:text-white transition">Especificaciones</a>
-            <span className="text-gray-700">|</span>
-            <button onClick={() => setCurrentTab("admin")} className="hover:text-white transition cursor-pointer">Panel Administrador</button>
+        <div className="border-t border-line bg-[#fafafa]">
+          <div className="max-w-mi mx-auto px-5 py-5 flex flex-col md:flex-row justify-between items-center gap-3 text-[11px] text-muted">
+            <p>
+              © 2026 Xiaomi CarTech Colombia (xiaomicartech.com.co) · Importador independiente.
+              Xiaomi y Mi son marcas registradas de Xiaomi Inc.
+            </p>
+            <span>Colombia (Español)</span>
           </div>
         </div>
       </footer>
