@@ -1,83 +1,122 @@
 import React from "react";
-import { ShoppingCart, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X, MessageCircle } from "lucide-react";
 
-export default function Navigation({ currentTab, setCurrentTab, onOpenCheckout, adminLoggedIn }: any) {
+const NAV_LINKS = [
+  { label: "Visión general", href: "#overview" },
+  { label: "Características", href: "#features" },
+  { label: "Especificaciones", href: "#specs" },
+  { label: "Reseñas", href: "#reviews" },
+];
+
+export default function Navigation({ setCurrentTab, onOpenCheckout }: any) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
+  const goHome = () => {
+    setCurrentTab("home");
+    setMobileMenuOpen(false);
+  };
+
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
-        
-        {/* Logo */}
-        <button 
-          onClick={() => setCurrentTab("home")}
-          className="flex items-center gap-2 hover:opacity-80 transition"
-        >
-          <img 
-            src="/xiaomi-cartech-logo.png" 
-            alt="Xiaomi CarTech" 
-            className="h-20 sm:h-24 w-auto"
-          />
-        </button>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-6">
-          <button onClick={() => setCurrentTab("home")} className="text-gray-700 hover:text-[#ff6900] font-medium text-sm">
-            Características
-          </button>
-          <button onClick={() => setCurrentTab("home")} className="text-gray-700 hover:text-[#ff6900] font-medium text-sm">
-            Especificaciones
-          </button>
-          <button onClick={() => setCurrentTab("home")} className="text-gray-700 hover:text-[#ff6900] font-medium text-sm">
-            Reseñas
-          </button>
-          {adminLoggedIn && (
-            <button onClick={() => setCurrentTab("admin")} className="text-gray-700 hover:text-[#ff6900] font-medium text-sm">
-              Admin
-            </button>
-          )}
+    <header className="bg-white">
+      {/* Barra superior de utilidades, estilo mi.com */}
+      <div className="hidden md:block bg-[#fafafa] border-b border-line">
+        <div className="max-w-mi mx-auto px-5 h-9 flex items-center justify-between text-xs text-muted">
+          <p className="font-medium">
+            Distribuidor autorizado independiente de Xiaomi en Colombia
+          </p>
+          <div className="flex items-center gap-5">
+            <a
+              href="https://wa.me/573000000000?text=Hola%2C%20necesito%20asistencia%20con%20mi%20pedido."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-ink transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Soporte por WhatsApp
+            </a>
+            <span className="text-line">|</span>
+            <span>Colombia (Español)</span>
+          </div>
         </div>
-
-        {/* CTA Button */}
-        <button
-          onClick={onOpenCheckout}
-          className="hidden sm:inline-flex items-center gap-2 bg-[#ff6900] hover:bg-[#e55f00] text-white px-4 py-2 rounded-full font-semibold text-sm transition"
-        >
-          <ShoppingCart className="w-4 h-4" />
-          COMPRAR AHORA
-        </button>
-
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden text-gray-700"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
-          <div className="px-4 py-4 space-y-3">
-            <button onClick={() => setCurrentTab("home")} className="block w-full text-left text-gray-700 hover:text-[#ff6900] py-2 font-medium">
-              Características
-            </button>
-            <button onClick={() => setCurrentTab("home")} className="block w-full text-left text-gray-700 hover:text-[#ff6900] py-2 font-medium">
-              Especificaciones
-            </button>
-            <button onClick={() => setCurrentTab("home")} className="block w-full text-left text-gray-700 hover:text-[#ff6900] py-2 font-medium">
-              Reseñas
-            </button>
+      {/* Barra principal */}
+      <div className="border-b border-line">
+        <div className="max-w-mi mx-auto px-5 h-16 md:h-[72px] flex items-center justify-between gap-6">
+          <button
+            onClick={goHome}
+            className="flex items-center shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
+            aria-label="Xiaomi CarTech — inicio"
+          >
+            <img
+              src="/xiaomi-cartech-logo.png"
+              alt="Xiaomi CarTech"
+              className="h-14 md:h-16 w-auto"
+            />
+          </button>
+
+          {/* Menú de escritorio */}
+          <nav className="hidden md:flex items-center gap-8">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={goHome}
+                className="text-sm text-body hover:text-mi font-medium transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-1">
+            {/* Carrito, como el header de mi.com (la compra vive en la barra de producto y el hero) */}
             <button
-              onClick={() => { onOpenCheckout(); setMobileMenuOpen(false); }}
-              className="w-full bg-[#ff6900] text-white py-2 rounded-lg font-semibold mt-3"
+              onClick={onOpenCheckout}
+              className="hidden md:inline-flex items-center justify-center min-w-11 min-h-11 text-ink hover:text-mi transition-colors cursor-pointer"
+              aria-label="Ir a comprar"
             >
-              COMPRAR AHORA
+              <ShoppingCart className="w-5 h-5" strokeWidth={1.8} />
+            </button>
+
+            {/* Botón de menú móvil */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-ink min-w-11 min-h-11 flex items-center justify-center -mr-2"
+              aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Menú móvil */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-b border-line bg-white">
+          <div className="px-5 py-3">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={goHome}
+                className="block text-body hover:text-mi py-3 font-medium border-b border-line/60 last:border-0"
+              >
+                {link.label}
+              </a>
+            ))}
+            <button
+              onClick={() => {
+                onOpenCheckout();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full bg-mi hover:bg-mi-dark text-white h-11 rounded-lg font-medium mt-3 mb-2 transition-colors"
+            >
+              Comprar ahora
             </button>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

@@ -1,17 +1,71 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
+/*
+ * MiSans — tipografía oficial de Xiaomi (subset Latin, autohospedada).
+ * Licencia: ver /public/fonts/MiSans-LICENSE.txt
+ */
+@font-face {
+  font-family: "MiSans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/MiSansLatin-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "MiSans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/MiSansLatin-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "MiSans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/MiSansLatin-Demibold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "MiSans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/MiSansLatin-Bold.woff2") format("woff2");
+}
+
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "MiSans", "Helvetica Neue", Helvetica, Arial, ui-sans-serif, system-ui, sans-serif;
+
+  /* Tokens del design system mi.com */
+  --color-mi: #ff6900;          /* naranja oficial Xiaomi */
+  --color-mi-dark: #e05e00;     /* hover del naranja; precios grandes (3.6:1) */
+  --color-mi-text: #c94f00;     /* naranja para texto pequeño: 4.56:1 sobre blanco (AA) */
+  --color-mi-soft: #fff3eb;     /* fondo suave naranja (badges) */
+  --color-ink: #1a1a1a;         /* titulares */
+  --color-body: #424242;        /* texto de párrafo */
+  --color-muted: #757575;       /* texto secundario */
+  --color-faint: #b0b0b0;       /* texto terciario / placeholders */
+  --color-line: #e0e0e0;        /* bordes y divisores */
+  --color-paper: #f5f5f5;       /* fondo de página mi.com */
+
+  --container-mi: 1226px;       /* ancho de contenedor de mi.com */
 }
 
 html {
   scroll-behavior: smooth;
+  /* La barra de producto fija mide 56px: las anclas no deben quedar debajo */
+  scroll-padding-top: 64px;
   font-family: var(--font-sans);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom animation timings */
+/* Foco visible consistente con la marca */
+:focus-visible {
+  outline: 2px solid var(--color-mi);
+  outline-offset: 2px;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -25,4 +79,19 @@ html {
 
 .animate-fade-in-up {
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-fade-in-up {
+    animation: none;
+  }
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
