@@ -28,6 +28,61 @@ const wompiPublicKey = process.env.WOMPI_PUBLIC_KEY || "";
 const wompiPrivateKey = process.env.WOMPI_PRIVATE_KEY || "";
 const wompiIntegritySecret = process.env.WOMPI_INTEGRITY_SECRET || "";
 const wompiEventsSecret = process.env.WOMPI_EVENTS_SECRET || "";
+
+// --- Autenticación de administración (server-side) ---
+// Antes: las credenciales vivían en el cliente y los endpoints de pedidos no tenían
+// ninguna comprobación → cualquiera podía leer los datos de todos los clientes y
+// aprobar/borrar pedidos. Ahora se valida un token firmado en el servidor.
+const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+const adminPassword = process.env.ADMIN_PASSWORD || "";
+// Secreto para firmar tokens de sesión. Si no se define, se genera uno efímero por
+// proceso (los tokens se invalidan al reiniciar, pero nunca hay un secreto por defecto).
+const adminSecret = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const adminConfigured = Boolean(adminEmail && adminPassword);
+
+const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest();
+const safeEqual = (a: string, b: string) => crypto.timingSafeEqual(sha256(a), sha256(b));
+
+const signToken = (payload: Record<string, unknown>) => {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto.createHmac("sha256", adminSecret).update(body).digest("base64url");
+  return `${body}.${sig}`;
+};
+const verifyToken = (token: string): Record<string, unknown> | null => {
+  const [body, sig] = (token || "").split(".");
+  if (!body || !sig) return null;
+  const expected = crypto.createHmac("sha256", adminSecret).update(body).digest("base64url");
+  const sigBuf = Buffer.from(sig);
+  const expBuf = Buffer.from(expected);
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString());
+    if (payload.exp && Date.now() > payload.exp) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+};
+const requireAdmin: express.RequestHandler = (req, res, next) => {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!verifyToken(token)) return res.status(401).json({ error: "No autorizado" });
+  next();
+};
+
+// Login: valida credenciales del servidor (nunca del cliente) y devuelve un token firmado.
+app.post("/api/admin/login", (req, res) => {
+  if (!adminConfigured) {
+    return res.status(503).json({ error: "Administración no configurada en el servidor" });
+  }
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const password = String(req.body?.password || "");
+  if (!safeEqual(email, adminEmail) || !safeEqual(password, adminPassword)) {
+    return res.status(401).json({ error: "Credenciales incorrectas" });
+  }
+  const token = signToken({ sub: "admin", exp: Date.now() + 8 * 60 * 60 * 1000 });
+  res.json({ token });
+});
 const appUrl = process.env.APP_URL || "https://xiaomicartech.com.co";
 
 const addBusinessDays = (date: Date, businessDays: number) => {
@@ -95,7 +150,7 @@ app.get("/api/health/integrations", (req, res) => {
   });
 });
 
-app.get("/api/orders", (req, res) => {
+app.get("/api/orders", requireAdmin, (req, res) => {
   const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   res.json(sorted);
 });
@@ -212,7 +267,7 @@ app.post("/api/wompi/webhook", async (req, res) => {
   res.json({ ok: true });
 });
 
-app.put("/api/orders/:id/status", (req, res) => {
+app.put("/api/orders/:id/status", requireAdmin, (req, res) => {
   const order = orders.find((x) => x.id === req.params.id);
   if (!order) return res.status(404).json({ error: "Pedido no encontrado" });
   if (!["PENDING", "APPROVED", "DECLINED"].includes(req.body.status)) {
@@ -223,7 +278,7 @@ app.put("/api/orders/:id/status", (req, res) => {
   res.json({ success: true, order });
 });
 
-app.put("/api/orders/:id/shipping", (req, res) => {
+app.put("/api/orders/:id/shipping", requireAdmin, (req, res) => {
   const order = orders.find((x) => x.id === req.params.id);
   if (!order) return res.status(404).json({ error: "Pedido no encontrado" });
 
@@ -242,7 +297,7 @@ app.put("/api/orders/:id/shipping", (req, res) => {
   res.json({ success: true, order });
 });
 
-app.delete("/api/orders/:id", (req, res) => {
+app.delete("/api/orders/:id", requireAdmin, (req, res) => {
   orders = orders.filter((x) => x.id !== req.params.id);
   saveOrders();
   res.json({ success: true });

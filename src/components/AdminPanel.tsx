@@ -1,14 +1,10 @@
 import React from "react";
 import { Order } from "../types";
 import { Lock, LogOut, RefreshCw, Check, X, Truck, Trash2, Package, Search } from "lucide-react";
-
-const ADMIN_EMAIL = "cic.inmuebles@gmail.com";
-const ADMIN_PASSWORD = "money";
+import { adminLogin, clearToken, authHeaders, isAuthed } from "../lib/adminAuth";
 
 export default function AdminPanel({ orders, onUpdateOrderStatus, onDeleteOrder, onRefreshOrders }: any) {
-  const [authed, setAuthed] = React.useState<boolean>(() => {
-    try { return sessionStorage.getItem("xiaomi_admin_auth") === "1"; } catch { return false; }
-  });
+  const [authed, setAuthed] = React.useState<boolean>(() => isAuthed());
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [authError, setAuthError] = React.useState("");
@@ -16,14 +12,24 @@ export default function AdminPanel({ orders, onUpdateOrderStatus, onDeleteOrder,
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState<"all" | "PENDING" | "APPROVED" | "DECLINED">("all");
 
-  const login = (e: React.FormEvent) => {
+  const [loggingIn, setLoggingIn] = React.useState(false);
+  const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      setAuthed(true);
-      setAuthError("");
-      try { sessionStorage.setItem("xiaomi_admin_auth", "1"); } catch {}
-    } else {
-      setAuthError("Credenciales incorrectas. Inténtalo de nuevo.");
+    setLoggingIn(true);
+    setAuthError("");
+    try {
+      // La validación ocurre en el servidor; el cliente solo recibe el token firmado.
+      const ok = await adminLogin(email, password);
+      if (ok) {
+        setAuthed(true);
+        onRefreshOrders();
+      } else {
+        setAuthError("Credenciales incorrectas. Inténtalo de nuevo.");
+      }
+    } catch {
+      setAuthError("No se pudo conectar con el servidor. Inténtalo de nuevo.");
+    } finally {
+      setLoggingIn(false);
     }
   };
 
@@ -31,13 +37,13 @@ export default function AdminPanel({ orders, onUpdateOrderStatus, onDeleteOrder,
     setAuthed(false);
     setEmail("");
     setPassword("");
-    try { sessionStorage.removeItem("xiaomi_admin_auth"); } catch {}
+    clearToken();
   };
 
   const markShipped = async (id: string) => {
     await fetch("/api/orders/" + id + "/shipping", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ shippingStatus: "SHIPPED", shippingEvidenceUrl: evidence[id] || "" })
     });
     onRefreshOrders();
@@ -89,9 +95,10 @@ export default function AdminPanel({ orders, onUpdateOrderStatus, onDeleteOrder,
 
             <button
               type="submit"
-              className="w-full bg-[#ff6900] hover:bg-[#e55f00] text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
+              disabled={loggingIn}
+              className="w-full bg-[#ff6900] hover:bg-[#e55f00] disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
             >
-              Iniciar sesión
+              {loggingIn ? "Verificando…" : "Iniciar sesión"}
             </button>
           </form>
         </div>

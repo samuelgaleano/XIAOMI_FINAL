@@ -5,6 +5,7 @@ import CheckoutPage from "./components/CheckoutPage";
 import SuccessPage from "./components/SuccessPage";
 import AdminPanel from "./components/AdminPanel";
 import { Order } from "./types";
+import { authHeaders, clearToken, isAuthed } from "./lib/adminAuth";
 import { MessageCircle } from "lucide-react";
 
 export default function App() {
@@ -16,14 +17,17 @@ export default function App() {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = React.useState(false);
 
-  // Fetch orders from our transactional backend server
+  // Fetch orders (solo admin autenticado; el servidor exige el token)
   const fetchOrders = async () => {
     setLoadingOrders(true);
     try {
-      const response = await fetch("/api/orders");
+      const response = await fetch("/api/orders", { headers: authHeaders() });
       if (response.ok) {
         const data = await response.json();
         setOrders(data);
+      } else if (response.status === 401) {
+        clearToken();
+        setOrders([]);
       }
     } catch (error) {
       console.error("Failed to load backend orders tree:", error);
@@ -32,9 +36,10 @@ export default function App() {
     }
   };
 
-  // Load orders on startup
+  // Cargar pedidos solo si ya hay sesión de admin (antes se cargaban para todo
+  // visitante, filtrando datos de clientes en la home pública)
   React.useEffect(() => {
-    fetchOrders();
+    if (isAuthed()) fetchOrders();
   }, []);
 
   // Acceso al panel administrador por URL (#admin), sin enlaces en la UI pública
@@ -54,7 +59,7 @@ export default function App() {
     try {
       const response = await fetch(`/api/orders/${orderId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ status: newStatus })
       });
       if (response.ok) {
@@ -77,7 +82,8 @@ export default function App() {
     }
     try {
       const response = await fetch(`/api/orders/${orderId}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: authHeaders()
       });
       if (response.ok) {
         fetchOrders();
@@ -118,7 +124,7 @@ export default function App() {
             }
           }}
           onOpenCheckout={() => setCurrentTab("checkout")}
-          adminLoggedIn={orders.length > 0} // visual helper
+          adminLoggedIn={isAuthed()}
           onLogoutAdmin={() => {}}
         />
       )}
