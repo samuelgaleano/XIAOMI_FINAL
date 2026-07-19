@@ -249,7 +249,7 @@ export default function App() {
             <ul className="space-y-2.5 text-xs text-muted">
               <li>
                 <a
-                  href="https://wa.me/573000000000?text=Hola%2C%20necesito%20asistencia%20respecto%20a%20mi%20pedido."
+                  href="https://wa.me/573148145417?text=Hola%2C%20necesito%20asistencia%20respecto%20a%20mi%20pedido."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 hover:text-mi transition-colors"

@@ -166,7 +166,7 @@ Por favor me confirman disponibilidad de envío inmediato!`;
 
               <div className="mt-6 pt-4 border-t border-line">
                 <a
-                  href={`https://wa.me/573000000000?text=${encodeURIComponent(formattedWhatsappMsg)}`}
+                  href={`https://wa.me/573148145417?text=${encodeURIComponent(formattedWhatsappMsg)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white font-semibold text-sm h-11 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"

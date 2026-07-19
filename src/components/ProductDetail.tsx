@@ -224,7 +224,7 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
             </div>
 
             <a
-              href="https://wa.me/573000000000?text=Hola%2C%20quiero%20asesor%C3%ADa%20sobre%20el%20Mi%2020W%20Wireless%20Car%20Charger."
+              href="https://wa.me/573148145417?text=Hola%2C%20quiero%20asesor%C3%ADa%20sobre%20el%20Mi%2020W%20Wireless%20Car%20Charger."
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-mi transition-colors"

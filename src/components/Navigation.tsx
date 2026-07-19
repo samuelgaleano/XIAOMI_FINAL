@@ -30,7 +30,7 @@ export default function Navigation({ setCurrentTab, onOpenProduct, onOpenCart, c
           </p>
           <div className="flex items-center gap-5">
             <a
-              href="https://wa.me/573000000000?text=Hola%2C%20necesito%20asistencia%20con%20mi%20pedido."
+              href="https://wa.me/573148145417?text=Hola%2C%20necesito%20asistencia%20con%20mi%20pedido."
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-ink transition-colors"
