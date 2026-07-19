@@ -485,7 +485,7 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
                 Comprar ahora
               </button>
               <a
-                href="https://wa.me/573000000000?text=Hola%2C%20quiero%20asesor%C3%ADa%20sobre%20el%20Mi%2020W%20Wireless%20Car%20Charger%20de%20Xiaomi.%20%C2%BFTienen%20disponibilidad%3F"
+                href="https://wa.me/573148145417?text=Hola%2C%20quiero%20asesor%C3%ADa%20sobre%20el%20Mi%2020W%20Wireless%20Car%20Charger%20de%20Xiaomi.%20%C2%BFTienen%20disponibilidad%3F"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-8 rounded-lg font-medium text-[15px] text-body border border-[#b0b0b0] hover:border-ink hover:text-ink transition-colors"
