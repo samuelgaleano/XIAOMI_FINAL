@@ -24,13 +24,15 @@ const trackPurchase = (orderId: string, eventId: string, value: number) => {
   }, { eventID: eventId });
 };
 
-export default function CheckoutPage({ onOrderComplete, onCancel }: {
+export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantity = 1 }: {
   onOrderComplete: (order: Order, emailNotificationSent: boolean) => void;
   onCancel: () => void;
+  initialQuantity?: number;
 }) {
   const [form, setForm] = React.useState({
     email: "", name: "", lastName: "", phone: "", cedula: "",
-    address: "", addressExtra: "", city: "Bogotá", departamento: "Cundinamarca", quantity: 1
+    address: "", addressExtra: "", city: "Bogotá", departamento: "Cundinamarca",
+    quantity: Math.min(5, Math.max(1, initialQuantity))
   });
   const [loading, setLoading] = React.useState(false);
   const [summaryOpen, setSummaryOpen] = React.useState(false);

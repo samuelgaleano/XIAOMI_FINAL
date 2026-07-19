@@ -2,17 +2,21 @@ import React from "react";
 import { ShoppingCart, Menu, X, MessageCircle } from "lucide-react";
 
 const NAV_LINKS = [
-  { label: "Visión general", href: "#overview" },
   { label: "Características", href: "#features" },
   { label: "Especificaciones", href: "#specs" },
   { label: "Reseñas", href: "#reviews" },
 ];
 
-export default function Navigation({ setCurrentTab, onOpenCheckout }: any) {
+export default function Navigation({ setCurrentTab, onOpenProduct, onOpenCart, cartCount = 0 }: any) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const goHome = () => {
     setCurrentTab("home");
+    setMobileMenuOpen(false);
+  };
+
+  const openProduct = () => {
+    onOpenProduct();
     setMobileMenuOpen(false);
   };
 
@@ -57,6 +61,12 @@ export default function Navigation({ setCurrentTab, onOpenCheckout }: any) {
 
           {/* Menú de escritorio */}
           <nav className="hidden md:flex items-center gap-8">
+            <button
+              onClick={openProduct}
+              className="text-sm text-body hover:text-mi font-medium transition-colors cursor-pointer"
+            >
+              Producto
+            </button>
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
@@ -70,13 +80,18 @@ export default function Navigation({ setCurrentTab, onOpenCheckout }: any) {
           </nav>
 
           <div className="flex items-center gap-1">
-            {/* Carrito, como el header de mi.com (la compra vive en la barra de producto y el hero) */}
+            {/* Carrito con contador */}
             <button
-              onClick={onOpenCheckout}
-              className="hidden md:inline-flex items-center justify-center min-w-11 min-h-11 text-ink hover:text-mi transition-colors cursor-pointer"
-              aria-label="Ir a comprar"
+              onClick={onOpenCart}
+              className="relative inline-flex items-center justify-center min-w-11 min-h-11 text-ink hover:text-mi transition-colors cursor-pointer"
+              aria-label={cartCount > 0 ? `Ver carrito (${cartCount})` : "Ver carrito"}
             >
               <ShoppingCart className="w-5 h-5" strokeWidth={1.8} />
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 bg-mi text-white text-[11px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {cartCount}
+                </span>
+              )}
             </button>
 
             {/* Botón de menú móvil */}
@@ -95,6 +110,12 @@ export default function Navigation({ setCurrentTab, onOpenCheckout }: any) {
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-line bg-white">
           <div className="px-5 py-3">
+            <button
+              onClick={openProduct}
+              className="block w-full text-left text-body hover:text-mi py-3 font-medium border-b border-line/60"
+            >
+              Producto
+            </button>
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
@@ -106,13 +127,10 @@ export default function Navigation({ setCurrentTab, onOpenCheckout }: any) {
               </a>
             ))}
             <button
-              onClick={() => {
-                onOpenCheckout();
-                setMobileMenuOpen(false);
-              }}
+              onClick={openProduct}
               className="w-full bg-mi hover:bg-mi-dark text-white h-11 rounded-lg font-medium mt-3 mb-2 transition-colors"
             >
-              Comprar ahora
+              Ver producto
             </button>
           </div>
         </div>

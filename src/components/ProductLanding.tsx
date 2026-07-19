@@ -20,12 +20,13 @@ import { formatCOP } from "../lib/format";
 
 interface ProductLandingProps {
   onOpenCheckout: () => void;
+  onViewProduct: () => void;
 }
 
 const PRICE = 169900;
 const ORIGINAL_PRICE = 219900;
 
-export default function ProductLanding({ onOpenCheckout }: ProductLandingProps) {
+export default function ProductLanding({ onOpenCheckout, onViewProduct }: ProductLandingProps) {
   const [videoPlaying, setVideoPlaying] = React.useState(false);
 
   // La barra de producto solo aparece al pasar el módulo de compra del hero, como en mi.com
@@ -131,25 +132,34 @@ export default function ProductLanding({ onOpenCheckout }: ProductLandingProps) 
             >
               Comprar ahora
             </button>
-            <a
-              href="#specs"
-              className="w-full sm:w-auto inline-flex items-center justify-center h-12 px-10 rounded-lg font-medium text-[15px] text-body border border-[#b0b0b0] hover:border-ink hover:text-ink transition-colors"
+            <button
+              onClick={onViewProduct}
+              className="w-full sm:w-auto inline-flex items-center justify-center h-12 px-10 rounded-lg font-medium text-[15px] text-body border border-[#b0b0b0] hover:border-ink hover:text-ink transition-colors cursor-pointer"
             >
-              Ver especificaciones
-            </a>
+              Ver producto
+            </button>
           </div>
           <p className="mt-4 text-xs text-muted">
             Envío gratis a todo el país · Paga con PSE, Nequi, tarjetas o contra entrega
           </p>
 
-          {/* Imagen principal del producto — bodegón limpio, sin overlays */}
+          {/* Imagen principal del producto — clic para abrir la galería del producto */}
           <div className="mt-10 md:mt-14 max-w-4xl mx-auto">
-            <img
-              src={HERO_IMAGE}
-              alt="Mi 20W Wireless Car Charger instalado en la rejilla de ventilación del carro"
-              className="w-full aspect-[4/3] md:aspect-[16/9] object-cover rounded-2xl bg-paper"
-              referrerPolicy="no-referrer"
-            />
+            <button
+              onClick={onViewProduct}
+              className="group relative block w-full rounded-2xl overflow-hidden bg-paper cursor-pointer"
+              aria-label="Ver galería y detalles del producto"
+            >
+              <img
+                src={HERO_IMAGE}
+                alt="Mi 20W Wireless Car Charger instalado en la rejilla de ventilación del carro"
+                className="w-full aspect-[4/3] md:aspect-[16/9] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                referrerPolicy="no-referrer"
+              />
+              <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm text-ink text-[13px] font-medium px-4 py-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                Ver galería y detalles →
+              </span>
+            </button>
           </div>
         </div>
 
