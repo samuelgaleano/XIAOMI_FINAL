@@ -1,17 +1,52 @@
 import React from "react";
 import Navigation from "./components/Navigation";
 import ProductLanding from "./components/ProductLanding";
+import ProductDetail from "./components/ProductDetail";
 import CheckoutPage from "./components/CheckoutPage";
 import SuccessPage from "./components/SuccessPage";
 import AdminPanel from "./components/AdminPanel";
 import { Order } from "./types";
 import { authHeaders, clearToken, isAuthed } from "./lib/adminAuth";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Check } from "lucide-react";
+
+type Tab = "home" | "product" | "admin" | "checkout";
 
 export default function App() {
-  const [currentTab, setCurrentTab] = React.useState<"home" | "admin" | "checkout">("home");
+  const [currentTab, setCurrentTab] = React.useState<Tab>("home");
   const [completedOrder, setCompletedOrder] = React.useState<Order | null>(null);
   const [emailNotificationSent, setEmailNotificationSent] = React.useState(false);
+
+  // Carrito: cantidad del único producto + cantidad con la que se abre el checkout
+  const [cartQty, setCartQty] = React.useState(0);
+  const [checkoutQty, setCheckoutQty] = React.useState(1);
+  const [toast, setToast] = React.useState<string | null>(null);
+  const toastTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  const goToTab = (tab: Tab) => {
+    setCurrentTab(tab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleAddToCart = (qty: number) => {
+    setCartQty((c) => Math.min(9, c + qty));
+    showToast(`Añadido al carrito · ${qty} ${qty === 1 ? "unidad" : "unidades"}`);
+  };
+
+  const handleBuyNow = (qty: number) => {
+    setCheckoutQty(qty);
+    goToTab("checkout");
+  };
+
+  const handleOpenCart = () => {
+    setCheckoutQty(cartQty > 0 ? cartQty : 1);
+    goToTab("checkout");
+  };
 
   // Administrative orders list
   const [orders, setOrders] = React.useState<Order[]>([]);
@@ -115,44 +150,73 @@ export default function App() {
       {/* Interactive Navigation bar — el checkout usa su propio encabezado minimal */}
       {currentTab !== "checkout" && !completedOrder && (
         <Navigation
-          currentTab={currentTab === "admin" ? "admin" : "home"}
-          setCurrentTab={(tab) => {
-            if (tab === "admin") {
-              setCurrentTab("admin");
-            } else {
-              setCurrentTab("home");
-            }
+          setCurrentTab={(tab: string) => {
+            if (tab === "admin") setCurrentTab("admin");
+            else if (tab === "product") goToTab("product");
+            else setCurrentTab("home");
           }}
+          onOpenProduct={() => goToTab("product")}
           onOpenCheckout={() => setCurrentTab("checkout")}
           adminLoggedIn={isAuthed()}
           onLogoutAdmin={() => {}}
+          cartCount={cartQty}
+          onOpenCart={handleOpenCart}
         />
       )}
 
       {/* Main Body */}
       <main className="flex-1">
         {completedOrder ? (
-          <SuccessPage 
-            order={completedOrder} 
+          <SuccessPage
+            order={completedOrder}
             emailNotificationSent={emailNotificationSent}
             onReset={handleResetSuccess}
           />
         ) : currentTab === "admin" ? (
-          <AdminPanel 
+          <AdminPanel
             orders={orders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onDeleteOrder={handleDeleteOrder}
             onRefreshOrders={fetchOrders}
           />
         ) : currentTab === "checkout" ? (
-          <CheckoutPage 
+          <CheckoutPage
             onOrderComplete={handleOrderComplete}
             onCancel={() => setCurrentTab("home")}
+            initialQuantity={checkoutQty}
+          />
+        ) : currentTab === "product" ? (
+          <ProductDetail
+            onBuyNow={handleBuyNow}
+            onAddToCart={handleAddToCart}
+            onBack={() => goToTab("home")}
           />
         ) : (
-          <ProductLanding onOpenCheckout={() => setCurrentTab("checkout")} />
+          <ProductLanding
+            onOpenCheckout={() => setCurrentTab("checkout")}
+            onViewProduct={() => goToTab("product")}
+          />
         )}
       </main>
+
+      {/* Toast de confirmación (carrito) */}
+      {toast && (
+        <div
+          role="status"
+          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-ink text-white text-sm font-medium pl-4 pr-3 py-3 rounded-xl shadow-lg animate-fade-in-up"
+        >
+          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-mi shrink-0">
+            <Check className="w-3.5 h-3.5" strokeWidth={3} />
+          </span>
+          <span>{toast}</span>
+          <button
+            onClick={handleOpenCart}
+            className="ml-1 text-mi-text bg-white/95 hover:bg-white font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+          >
+            Ver carrito
+          </button>
+        </div>
+      )}
 
       {/* Footer — estructura de columnas estilo mi.com */}
       <footer className="bg-white border-t border-line text-left">
