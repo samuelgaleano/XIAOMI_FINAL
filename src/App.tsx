@@ -7,11 +7,14 @@ import SuccessPage from "./components/SuccessPage";
 import AdminPanel from "./components/AdminPanel";
 import { Order } from "./types";
 import { authHeaders, clearToken, isAuthed } from "./lib/adminAuth";
+import { useI18n } from "./lib/i18n";
+import { PRODUCT } from "./lib/product";
 import { MessageCircle, Check } from "lucide-react";
 
 type Tab = "home" | "product" | "admin" | "checkout";
 
 export default function App() {
+  const { s } = useI18n();
   const [currentTab, setCurrentTab] = React.useState<Tab>("home");
   const [completedOrder, setCompletedOrder] = React.useState<Order | null>(null);
   const [emailNotificationSent, setEmailNotificationSent] = React.useState(false);
@@ -30,12 +33,11 @@ export default function App() {
 
   const goToTab = (tab: Tab) => {
     setCurrentTab(tab);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleAddToCart = (qty: number) => {
-    setCartQty((c) => Math.min(9, c + qty));
-    showToast(`Añadido al carrito · ${qty} ${qty === 1 ? "unidad" : "unidades"}`);
+    setCartQty((c) => Math.min(PRODUCT.maxQuantity, c + qty));
+    showToast(s.toast.added(qty));
   };
 
   const handleBuyNow = (qty: number) => {
@@ -75,6 +77,32 @@ export default function App() {
   // visitante, filtrando datos de clientes en la home pública)
   React.useEffect(() => {
     if (isAuthed()) fetchOrders();
+  }, []);
+
+  // Al cambiar de vista (o mostrar la confirmación) volver siempre al inicio de la
+  // página: si el usuario pulsó "Comprar ahora" desde el fondo del landing, el
+  // checkout debe abrir desde arriba y no quedarse en la posición anterior.
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentTab, completedOrder]);
+
+  // Retorno de pasarelas con redirect de página completa (PSE/Nequi/Bancolombia):
+  // Wompi vuelve a `/?checkout=success&orderId=…`. Sin esto, quien paga por PSE
+  // no vería ninguna confirmación. Mostramos el éxito, vaciamos el carrito y
+  // limpiamos la URL.
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success") {
+      const orderId = params.get("orderId") || "";
+      setCompletedOrder({
+        id: orderId, customerName: "", customerEmail: "", customerPhone: "",
+        customerAddress: "", customerCity: "", paymentMethod: "", amount: 0,
+        status: "APPROVED", items: [], createdAt: "", paymentDetails: {},
+      } as unknown as Order);
+      setEmailNotificationSent(false);
+      setCartQty(0);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   // Acceso al panel administrador por URL (#admin), sin enlaces en la UI pública
@@ -133,6 +161,7 @@ export default function App() {
   const handleOrderComplete = (order: Order, wasEmailSent: boolean) => {
     setCompletedOrder(order);
     setEmailNotificationSent(wasEmailSent);
+    setCartQty(0); // vaciar el carrito al concretar la compra
     // Refresh admin data
     fetchOrders();
   };
@@ -213,7 +242,7 @@ export default function App() {
             onClick={handleOpenCart}
             className="ml-1 text-mi-text bg-white/95 hover:bg-white font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
           >
-            Ver carrito
+            {s.toast.viewCart}
           </button>
         </div>
       )}
@@ -225,48 +254,47 @@ export default function App() {
           <div className="col-span-2 md:col-span-1 space-y-4">
             <img src="/xiaomi-cartech-logo.png" alt="Xiaomi CarTech" className="h-14 w-auto" />
             <p className="text-xs text-muted leading-relaxed max-w-xs">
-              Distribuidor autorizado independiente del Mi 20W Wireless Car Charger en
-              Colombia. Producto original, empaque sellado de fábrica y garantía oficial.
+              {s.footer.blurb}
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-ink text-sm mb-4">Producto</h4>
+            <h4 className="font-semibold text-ink text-sm mb-4">{s.footer.product}</h4>
             <ul className="space-y-2.5 text-xs text-muted">
-              <li><a href="#features" className="hover:text-mi transition-colors">Características</a></li>
-              <li><a href="#specs" className="hover:text-mi transition-colors">Especificaciones</a></li>
-              <li><a href="#reviews" className="hover:text-mi transition-colors">Reseñas</a></li>
+              <li><a href="#features" className="hover:text-mi transition-colors">{s.nav.features}</a></li>
+              <li><a href="#specs" className="hover:text-mi transition-colors">{s.nav.specs}</a></li>
+              <li><a href="#reviews" className="hover:text-mi transition-colors">{s.nav.reviews}</a></li>
               <li>
                 <button onClick={() => setCurrentTab("checkout")} className="hover:text-mi transition-colors cursor-pointer">
-                  Comprar ahora
+                  {s.common.buyNow}
                 </button>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold text-ink text-sm mb-4">Soporte</h4>
+            <h4 className="font-semibold text-ink text-sm mb-4">{s.footer.support}</h4>
             <ul className="space-y-2.5 text-xs text-muted">
               <li>
                 <a
-                  href="https://wa.me/573148145417?text=Hola%2C%20necesito%20asistencia%20respecto%20a%20mi%20pedido."
+                  href={`https://wa.me/573148145417?text=${encodeURIComponent(s.wa.orderHelp)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 hover:text-mi transition-colors"
                   id="wa-footer-btn"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  WhatsApp en vivo
+                  {s.footer.waLive}
                 </a>
               </li>
               <li><a href="mailto:ventas@xiaomicartech.com.co" className="hover:text-mi transition-colors break-all">ventas@xiaomicartech.com.co</a></li>
-              <li>Garantía oficial de 12 meses</li>
-              <li>Envíos a todo el país en 2–5 días</li>
+              <li>{s.footer.warranty12}</li>
+              <li>{s.footer.shipping25}</li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold text-ink text-sm mb-4">Medios de pago</h4>
+            <h4 className="font-semibold text-ink text-sm mb-4">{s.footer.payMethods}</h4>
             <div className="flex flex-wrap gap-1.5">
               {["Wompi", "PSE", "Nequi", "Bold", "Visa", "Mastercard"].map((m) => (
                 <span key={m} className="border border-line text-muted py-1 px-2.5 rounded text-[11px] font-medium">
@@ -274,11 +302,11 @@ export default function App() {
                 </span>
               ))}
             </div>
-            <h4 className="font-semibold text-ink text-sm mb-3 mt-6">Legal</h4>
+            <h4 className="font-semibold text-ink text-sm mb-3 mt-6">{s.footer.legal}</h4>
             <ul className="space-y-2.5 text-xs text-muted">
-              <li><a href="/privacidad.html" className="hover:text-mi transition-colors">Política de privacidad</a></li>
-              <li><a href="/terminos.html" className="hover:text-mi transition-colors">Términos y condiciones</a></li>
-              <li><a href="/eliminacion-de-datos.html" className="hover:text-mi transition-colors">Eliminación de datos</a></li>
+              <li><a href="/privacidad.html" className="hover:text-mi transition-colors">{s.footer.privacy}</a></li>
+              <li><a href="/terminos.html" className="hover:text-mi transition-colors">{s.footer.terms}</a></li>
+              <li><a href="/eliminacion-de-datos.html" className="hover:text-mi transition-colors">{s.footer.dataRemoval}</a></li>
             </ul>
           </div>
 
@@ -286,11 +314,8 @@ export default function App() {
 
         <div className="border-t border-line bg-[#fafafa]">
           <div className="max-w-mi mx-auto px-5 py-5 flex flex-col md:flex-row justify-between items-center gap-3 text-[11px] text-muted">
-            <p>
-              © 2026 Xiaomi CarTech Colombia (xiaomicartech.com.co) · Importador independiente.
-              Xiaomi y Mi son marcas registradas de Xiaomi Inc.
-            </p>
-            <span>Colombia (Español)</span>
+            <p>{s.footer.rights}</p>
+            <span>{s.footer.region}</span>
           </div>
         </div>
       </footer>
