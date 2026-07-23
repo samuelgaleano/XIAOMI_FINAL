@@ -4,10 +4,10 @@
 
 export type Lang = "es" | "en";
 
-const HERO_IMAGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDb4tCIFKq4rJ1NAc4KY3AWQupIYxvPvzbo2ou8Qs9SISyT_OpBQR_dV0Bxu6VOXnbXmVKNuKlTHWIt97tzsiI0FdGKiUA7nrOioGZ5D0QsIDBnt4Sta1EkXrXylIDfOtgsaRl5RRbiBO1WnueWMi3okedfpcpVxUuBclVXr0j72KU939Mvv8FcE4gMfIXKkTgVAfS0F1n7T0xFRyYRChGGK4Y4cIRqoe_H-QRYojjGXJlhpAfvP49lr8rEui2QpnfepFcGBNTiGD8q";
-const SENSOR_IMAGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDg0HLk0eGSwLD-wc4mZm10E3USrVDH3KyEAImvUPvG9wvf6iUfrdsZbtMl_rf4c9X0rBBD2tunap6miExDRDrBjgdaXODEgZXRtjtHkDzDoy3f0OjUHfmJivQLQrwjdVnBHha9R97loxnUnNGS3MfLjRCYWcrndS2_Zjx22ft3HovIQXMOulgApcV-i-DGq3lUWNFIG-yF3mwcVGf_FYOoQNOalPXeNZ8D1_DiWfqSZ9HY74OY5BWPNbFYop9ex1Jp4E0Ymo_FdbLp";
+// Imágenes oficiales del producto, autohospedadas en /public.
+export const IMG_FRONT = "/product-front.png"; // packshot frontal limpio
+export const IMG_CAR = "/product-car.jpg";     // montado en la rejilla (beauty)
+export const IMG_HAND = "/product-hand.jpg";   // colocando el teléfono (sujeción automática)
 
 export const PRODUCT = {
   id: "MI-20W-CAR-CHARGER",
@@ -17,9 +17,8 @@ export const PRODUCT = {
   rating: 4.9,
   reviewCount: 128,
   maxQuantity: 5,
-  // Solo hay 2 fotos reales distintas; no se rellenan slots con duplicados.
   // Para más ángulos, añade la URL aquí y una leyenda en cada idioma (captions).
-  images: [HERO_IMAGE, SENSOR_IMAGE],
+  images: [IMG_FRONT, IMG_CAR, IMG_HAND],
 };
 
 export interface SpecGroup {
@@ -48,8 +47,9 @@ const COPY: Record<Lang, ProductCopy> = {
       "Compatible con celulares Qi (Xiaomi, Apple, Samsung, Huawei)",
     ],
     captions: [
+      "Vista frontal con cristal curvo 2.5D",
       "Montaje en la rejilla de ventilación",
-      "Sensor infrarrojo de sujeción automática",
+      "Sujeción automática con una sola mano",
     ],
     specs: [
       { group: "General", rows: [
@@ -85,8 +85,9 @@ const COPY: Record<Lang, ProductCopy> = {
       "Works with Qi phones (Xiaomi, Apple, Samsung, Huawei)",
     ],
     captions: [
+      "2.5D curved glass front view",
       "Mounted on the air vent",
-      "Automatic-grip infrared sensor",
+      "Automatic one-handed grip",
     ],
     specs: [
       { group: "General", rows: [
