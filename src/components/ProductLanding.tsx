@@ -8,7 +8,6 @@ import {
   Cpu,
   Truck,
   RotateCcw,
-  CheckCircle2,
   Play,
   Smartphone,
   Fan,
@@ -17,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { formatCOP } from "../lib/format";
+import { getProductCopy } from "../lib/product";
+import { useI18n } from "../lib/i18n";
 
 interface ProductLandingProps {
   onOpenCheckout: () => void;
@@ -26,7 +27,14 @@ interface ProductLandingProps {
 const PRICE = 169900;
 const ORIGINAL_PRICE = 219900;
 
+const SERVICE_ICONS = [Truck, RotateCcw, Award, ShieldCheck];
+const FEATURE_ICONS = [Zap, Cpu, Fan];
+
+const initialsOf = (name: string) =>
+  name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
 export default function ProductLanding({ onOpenCheckout, onViewProduct }: ProductLandingProps) {
+  const { s, lang } = useI18n();
   const [videoPlaying, setVideoPlaying] = React.useState(false);
 
   // La barra de producto solo aparece al pasar el módulo de compra del hero, como en mi.com
@@ -62,6 +70,7 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
   const SENSOR_IMAGE = "https://lh3.googleusercontent.com/aida-public/AB6AXuDg0HLk0eGSwLD-wc4mZm10E3USrVDH3KyEAImvUPvG9wvf6iUfrdsZbtMl_rf4c9X0rBBD2tunap6miExDRDrBjgdaXODEgZXRtjtHkDzDoy3f0OjUHfmJivQLQrwjdVnBHha9R97loxnUnNGS3MfLjRCYWcrndS2_Zjx22ft3HovIQXMOulgApcV-i-DGq3lUWNFIG-yF3mwcVGf_FYOoQNOalPXeNZ8D1_DiWfqSZ9HY74OY5BWPNbFYop9ex1Jp4E0Ymo_FdbLp";
 
   const savings = ORIGINAL_PRICE - PRICE;
+  const productName = "Mi 20W Wireless Car Charger";
 
   return (
     <div className="bg-white" id="overview">
@@ -75,13 +84,13 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       >
         <div className="max-w-mi mx-auto px-5 h-14 flex items-center justify-between gap-3">
           <span className="text-[13px] sm:text-[15px] font-semibold text-ink truncate">
-            Mi 20W Wireless Car Charger
+            {productName}
           </span>
           <div className="flex items-center gap-3 sm:gap-6 shrink-0">
             <nav className="hidden lg:flex items-center gap-6 text-[13px] text-muted">
-              <a href="#features" className="hover:text-ink transition-colors">Características</a>
-              <a href="#specs" className="hover:text-ink transition-colors">Especificaciones</a>
-              <a href="#reviews" className="hover:text-ink transition-colors">Reseñas</a>
+              <a href="#features" className="hover:text-ink transition-colors">{s.nav.features}</a>
+              <a href="#specs" className="hover:text-ink transition-colors">{s.nav.specs}</a>
+              <a href="#reviews" className="hover:text-ink transition-colors">{s.nav.reviews}</a>
             </nav>
             <div className="flex items-baseline gap-2">
               <span className="text-[14px] sm:text-[15px] font-semibold text-mi-text">{formatCOP(PRICE)}</span>
@@ -93,7 +102,7 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
               id="hero-buy-now-btn"
               tabIndex={showBar ? 0 : -1}
             >
-              Comprar ahora
+              {s.common.buyNow}
             </button>
           </div>
         </div>
@@ -102,25 +111,23 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       {/* HERO — presentación centrada estilo mi.com */}
       <section className="bg-white">
         <div className="max-w-mi mx-auto px-5 pt-12 md:pt-16 pb-10 text-center animate-fade-in-up">
-          <p className="text-[13px] md:text-sm font-medium text-muted">
-            Xiaomi · Distribuidor autorizado en Colombia
-          </p>
+          <p className="text-[13px] md:text-sm font-medium text-muted">{s.hero.eyebrow}</p>
           <h1 className="mt-3 text-4xl md:text-[56px] leading-tight font-semibold text-ink tracking-tight">
-            Mi 20W Wireless Car Charger
+            {productName}
           </h1>
           <p className="mt-4 text-sm md:text-base text-muted font-normal">
-            <span className="inline-block">Carga inalámbrica de 20W</span>
+            <span className="inline-block">{s.hero.claims[0]}</span>
             <span className="mx-2 text-line" aria-hidden="true">|</span>
-            <span className="inline-block">Sensor infrarrojo automático</span>
+            <span className="inline-block">{s.hero.claims[1]}</span>
             <span className="mx-2 text-line" aria-hidden="true">|</span>
-            <span className="inline-block">Refrigeración activa</span>
+            <span className="inline-block">{s.hero.claims[2]}</span>
           </p>
 
           <div className="mt-6 flex items-baseline justify-center gap-3">
             <span className="text-3xl md:text-4xl font-semibold text-mi-dark">{formatCOP(PRICE)}</span>
             <span className="text-lg text-faint line-through">{formatCOP(ORIGINAL_PRICE)}</span>
             <span className="hidden sm:inline-block text-xs font-medium text-mi-text bg-mi-soft border border-mi/20 rounded px-2 py-1">
-              Ahorras {formatCOP(savings)}
+              {s.hero.save(formatCOP(savings))}
             </span>
           </div>
 
@@ -130,34 +137,32 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
               className="w-full sm:w-auto bg-mi hover:bg-mi-dark text-white h-12 px-10 rounded-lg font-semibold text-[15px] transition-colors cursor-pointer"
               id="hero-image-immediate-buy-btn"
             >
-              Comprar ahora
+              {s.common.buyNow}
             </button>
             <button
               onClick={onViewProduct}
               className="w-full sm:w-auto inline-flex items-center justify-center h-12 px-10 rounded-lg font-medium text-[15px] text-body border border-[#b0b0b0] hover:border-ink hover:text-ink transition-colors cursor-pointer"
             >
-              Ver producto
+              {s.common.viewProduct}
             </button>
           </div>
-          <p className="mt-4 text-xs text-muted">
-            Envío gratis a todo el país · Paga con PSE, Nequi, tarjetas o contra entrega
-          </p>
+          <p className="mt-4 text-xs text-muted">{s.hero.note}</p>
 
           {/* Imagen principal del producto — clic para abrir la galería del producto */}
           <div className="mt-10 md:mt-14 max-w-4xl mx-auto">
             <button
               onClick={onViewProduct}
               className="group relative block w-full rounded-2xl overflow-hidden bg-paper cursor-pointer"
-              aria-label="Ver galería y detalles del producto"
+              aria-label={s.common.viewProduct}
             >
               <img
                 src={HERO_IMAGE}
-                alt="Mi 20W Wireless Car Charger instalado en la rejilla de ventilación del carro"
+                alt={productName}
                 className="w-full aspect-[4/3] md:aspect-[16/9] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                 referrerPolicy="no-referrer"
               />
               <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm text-ink text-[13px] font-medium px-4 py-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                Ver galería y detalles →
+                {s.hero.galleryHint}
               </span>
             </button>
           </div>
@@ -166,20 +171,18 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
         {/* Franja de servicios — como la tienda mi.com/co */}
         <div className="border-y border-line bg-white">
           <div className="max-w-mi mx-auto px-5 py-6 grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Truck, title: "Envío gratis", sub: "Entrega en 2 a 5 días hábiles" },
-              { icon: RotateCcw, title: "Devoluciones", sub: "14 días sin costo" },
-              { icon: Award, title: "Garantía oficial", sub: "12 meses Xiaomi" },
-              { icon: ShieldCheck, title: "Pagos 100% seguros", sub: "Wompi · PSE · Nequi" },
-            ].map(({ icon: Icon, title, sub }) => (
-              <div key={title} className="flex items-center justify-center gap-3 text-center sm:text-left">
-                <Icon className="w-6 h-6 text-mi shrink-0 hidden sm:block" strokeWidth={1.6} />
-                <div>
-                  <p className="text-sm font-medium text-ink">{title}</p>
-                  <p className="text-xs text-muted mt-0.5">{sub}</p>
+            {s.services.map((svc, i) => {
+              const Icon = SERVICE_ICONS[i];
+              return (
+                <div key={svc.title} className="flex items-center justify-center gap-3 text-center sm:text-left">
+                  <Icon className="w-6 h-6 text-mi shrink-0 hidden sm:block" strokeWidth={1.6} />
+                  <div>
+                    <p className="text-sm font-medium text-ink">{svc.title}</p>
+                    <p className="text-xs text-muted mt-0.5">{svc.sub}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -188,40 +191,24 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       <section className="bg-paper py-14 md:py-20" id="features">
         <div className="max-w-mi mx-auto px-5">
           <h2 className="text-2xl md:text-[34px] font-semibold text-ink text-center tracking-tight">
-            Diseñado para tu día a día al volante
+            {s.features.heading}
           </h2>
           <p className="text-sm md:text-base text-muted text-center mt-3 max-w-2xl mx-auto">
-            Tecnología de carga certificada Qi con la calidad de fabricación de Xiaomi.
+            {s.features.sub}
           </p>
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              {
-                icon: Zap,
-                stat: "20W",
-                title: "Carga súper rápida",
-                sub: "Del 0% al 45% en 30 minutos de conducción en dispositivos compatibles.",
-              },
-              {
-                icon: Cpu,
-                stat: "8 cm",
-                title: "Sensor infrarrojo",
-                sub: "Los brazos se abren solos al acercar el teléfono y lo sujetan firmemente.",
-              },
-              {
-                icon: Fan,
-                stat: "2×",
-                title: "Doble disipación",
-                sub: "Ventilador silencioso y disipador trasero que protegen la batería.",
-              },
-            ].map(({ icon: Icon, stat, title, sub }) => (
-              <div key={title} className="bg-white rounded-2xl p-8 text-center">
-                <Icon className="w-7 h-7 text-mi mx-auto" strokeWidth={1.6} />
-                <p className="mt-4 text-4xl font-semibold text-ink tracking-tight">{stat}</p>
-                <h3 className="mt-2 text-base font-semibold text-ink">{title}</h3>
-                <p className="mt-2 text-sm text-muted leading-relaxed">{sub}</p>
-              </div>
-            ))}
+            {s.features.cards.map((card, i) => {
+              const Icon = FEATURE_ICONS[i];
+              return (
+                <div key={card.title} className="bg-white rounded-2xl p-8 text-center">
+                  <Icon className="w-7 h-7 text-mi mx-auto" strokeWidth={1.6} />
+                  <p className="mt-4 text-4xl font-semibold text-ink tracking-tight">{card.stat}</p>
+                  <h3 className="mt-2 text-base font-semibold text-ink">{card.title}</h3>
+                  <p className="mt-2 text-sm text-muted leading-relaxed">{card.sub}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -231,42 +218,29 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
         <div className="max-w-mi mx-auto px-5 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <img
             src={SENSOR_IMAGE}
-            alt="Detalle del sensor infrarrojo del Mi 20W Wireless Car Charger"
+            alt={s.sensor.eyebrow}
             className="w-full aspect-[4/3] object-cover rounded-2xl bg-paper order-1"
             referrerPolicy="no-referrer"
             loading="lazy"
           />
           <div className="order-2 text-left">
-            <p className="text-[13px] font-medium text-mi-text">
-              Sujeción automática
-            </p>
+            <p className="text-[13px] font-medium text-mi-text">{s.sensor.eyebrow}</p>
             <h2 className="mt-3 text-2xl md:text-[34px] font-semibold text-ink tracking-tight leading-tight">
-              Acércalo y se abre. Tócalo y se libera.
+              {s.sensor.heading}
             </h2>
-            <p className="mt-4 text-[15px] text-body leading-relaxed">
-              El sensor infrarrojo oculto detecta tu teléfono a menos de 8 cm: los brazos
-              motorizados se abren suavemente y se cierran firmes en un instante, sin que
-              apartes la vista del camino.
-            </p>
-            <p className="mt-3 text-[15px] text-body leading-relaxed">
-              Para retirarlo, un toque en el sensor lateral activa el sistema de liberación
-              y tu teléfono queda libre al instante. Todo con una sola mano.
-            </p>
+            <p className="mt-4 text-[15px] text-body leading-relaxed">{s.sensor.p1}</p>
+            <p className="mt-3 text-[15px] text-body leading-relaxed">{s.sensor.p2}</p>
 
             <div className="mt-8 grid grid-cols-2 gap-6 border-t border-line pt-6">
               <div>
                 <Hand className="w-5 h-5 text-mi" strokeWidth={1.6} />
-                <h4 className="mt-2 text-sm font-semibold text-ink">Operación con una mano</h4>
-                <p className="mt-1 text-xs text-muted leading-relaxed">
-                  Coloca y retira el teléfono en un segundo.
-                </p>
+                <h4 className="mt-2 text-sm font-semibold text-ink">{s.sensor.f1t}</h4>
+                <p className="mt-1 text-xs text-muted leading-relaxed">{s.sensor.f1s}</p>
               </div>
               <div>
                 <Smartphone className="w-5 h-5 text-mi" strokeWidth={1.6} />
-                <h4 className="mt-2 text-sm font-semibold text-ink">Cristal curvo 2.5D</h4>
-                <p className="mt-1 text-xs text-muted leading-relaxed">
-                  Panel de vidrio premium con mejor disipación térmica.
-                </p>
+                <h4 className="mt-2 text-sm font-semibold text-ink">{s.sensor.f2t}</h4>
+                <p className="mt-1 text-xs text-muted leading-relaxed">{s.sensor.f2s}</p>
               </div>
             </div>
           </div>
@@ -276,30 +250,21 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       {/* SECCIÓN: 20W — bloque de cifra grande estilo Xiaomi */}
       <section className="bg-paper py-14 md:py-20">
         <div className="max-w-mi mx-auto px-5 text-center">
-          <p className="text-[13px] font-medium text-mi-text">
-            Potencia certificada Qi
-          </p>
+          <p className="text-[13px] font-medium text-mi-text">{s.power.eyebrow}</p>
           <h2 className="mt-3 text-2xl md:text-[34px] font-semibold text-ink tracking-tight">
-            Carga inalámbrica de hasta
+            {s.power.heading}
           </h2>
           <p className="mt-2 text-[88px] md:text-[120px] leading-none font-semibold text-mi tracking-tight">
             20W
           </p>
-          <p className="mt-6 text-[15px] text-body max-w-[560px] mx-auto leading-relaxed">
-            Recupera hasta un 45% de batería en 30 minutos de trayecto. El doble mecanismo
-            de protección térmica —ventilador extractor interno y disipador metálico
-            trasero— balancea la potencia según la temperatura para cuidar tu batería a
-            largo plazo.
-          </p>
-          <p className="mt-3 text-xs text-muted">
-            Compatible con todos los teléfonos con certificación Qi: Xiaomi, Apple, Samsung, Huawei y más.
-          </p>
+          <p className="mt-6 text-[15px] text-body max-w-[560px] mx-auto leading-relaxed">{s.power.p}</p>
+          <p className="mt-3 text-xs text-muted">{s.power.note}</p>
           <button
             onClick={onOpenCheckout}
             className="mt-8 text-mi-text font-medium hover:text-mi-dark transition-colors text-sm cursor-pointer"
             id="features-link-btn"
           >
-            Comprar con garantía original →
+            {s.power.link}
           </button>
         </div>
       </section>
@@ -308,16 +273,14 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       <section className="bg-white py-14 md:py-20" id="gallery">
         <div className="max-w-mi mx-auto px-5">
           <h2 className="text-2xl md:text-[34px] font-semibold text-ink text-center tracking-tight">
-            Así se ve en tu carro
+            {s.gallery.heading}
           </h2>
-          <p className="text-sm text-muted text-center mt-3">
-            Fotografías oficiales del producto
-          </p>
+          <p className="text-sm text-muted text-center mt-3">{s.gallery.sub}</p>
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">
             <img
               src={HERO_IMAGE}
-              alt="Cargador montado en la rejilla de ventilación"
+              alt={s.gallery.heading}
               className="w-full h-72 md:h-[420px] object-cover rounded-2xl bg-paper"
               referrerPolicy="no-referrer"
               loading="lazy"
@@ -327,16 +290,14 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
                 <div className="absolute inset-0 flex justify-center items-center text-white bg-ink">
                   <div className="text-center p-6">
                     <Smartphone className="w-10 h-10 text-mi animate-pulse mx-auto mb-3" />
-                    <p className="font-semibold text-lg">Sensor automático activado</p>
-                    <p className="text-xs text-white/60 mt-1">
-                      Carga del 0 al 45% en 30 minutos de trayecto.
-                    </p>
+                    <p className="font-semibold text-lg">{s.gallery.demoTitle}</p>
+                    <p className="text-xs text-white/60 mt-1">{s.gallery.demoSub}</p>
                     <button
                       onClick={() => setVideoPlaying(false)}
                       className="mt-5 text-xs font-medium bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg border border-white/20 transition-colors cursor-pointer"
                       id="close-video-btn"
                     >
-                      Detener demostración
+                      {s.gallery.demoStop}
                     </button>
                   </div>
                 </div>
@@ -344,20 +305,21 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
                 <>
                   <img
                     src={SENSOR_IMAGE}
-                    alt="Demostración del mecanismo de sujeción automática"
+                    alt={s.gallery.demoCaption}
                     className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 duration-700 transition-transform"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                   />
                   <button
                     onClick={() => setVideoPlaying(true)}
                     className="absolute inset-0 m-auto z-10 w-16 h-16 rounded-full bg-white text-ink flex items-center justify-center shadow-lg hover:scale-105 duration-200 transition-transform cursor-pointer"
-                    aria-label="Reproducir demostración"
+                    aria-label={s.gallery.play}
                     id="play-video-btn"
                   >
                     <Play className="w-6 h-6 fill-ink ml-0.5" />
                   </button>
                   <p className="absolute bottom-4 left-4 right-4 z-10 text-white text-xs font-medium bg-black/50 backdrop-blur-sm px-4 py-2.5 rounded-lg text-left">
-                    Demostración: apertura automática por sensor infrarrojo
+                    {s.gallery.demoCaption}
                   </p>
                 </>
               )}
@@ -370,27 +332,11 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       <section className="bg-paper py-14 md:py-20" id="specs">
         <div className="max-w-mi mx-auto px-5">
           <h2 className="text-2xl md:text-[34px] font-semibold text-ink text-center tracking-tight">
-            Especificaciones
+            {s.specsHeading}
           </h2>
 
           <div className="mt-10 max-w-3xl mx-auto bg-white rounded-2xl px-6 md:px-10 py-4">
-            {[
-              { group: "Carga", rows: [
-                ["Salida inalámbrica", "Hasta 20W (certificación Qi)"],
-                ["Entrada", "5V–20V · 1.35A máx."],
-                ["Puerto", "USB Tipo-C"],
-              ]},
-              { group: "Diseño", rows: [
-                ["Compatibilidad", "Teléfonos de hasta 81.5 mm de ancho"],
-                ["Instalación", "Rejilla de ventilación o soporte de tablero"],
-                ["Refrigeración", "Ventilador activo + disipador metálico"],
-              ]},
-              { group: "Mecanismo", rows: [
-                ["Apertura", "Automática por sensor infrarrojo (≤ 8 cm)"],
-                ["Liberación", "Toque en el sensor lateral"],
-                ["Panel frontal", "Cristal curvo 2.5D"],
-              ]},
-            ].map(({ group, rows }) => (
+            {getProductCopy(lang).specs.map(({ group, rows }) => (
               <div key={group} className="py-5 border-b border-line last:border-0">
                 <h3 className="text-sm font-semibold text-mi-text mb-3">{group}</h3>
                 {rows.map(([label, value]) => (
@@ -409,32 +355,19 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       <section className="bg-white py-14 md:py-20" id="reviews">
         <div className="max-w-mi mx-auto px-5">
           <h2 className="text-2xl md:text-[34px] font-semibold text-ink text-center tracking-tight">
-            Lo que dicen nuestros clientes
+            {s.reviews.heading}
           </h2>
           <div className="mt-3 flex items-center justify-center gap-2">
-            <div className="flex gap-0.5" role="img" aria-label="Calificación: 5 de 5 estrellas">
+            <div className="flex gap-0.5" role="img" aria-label={s.ratingLabel(5)}>
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-mi text-mi" aria-hidden="true" />
               ))}
             </div>
-            <span className="text-sm text-muted">Compradores verificados en Colombia</span>
+            <span className="text-sm text-muted">{s.reviews.sub}</span>
           </div>
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
-            {[
-              {
-                initials: "CM", name: "Carlos M. Restrepo", city: "Bogotá",
-                text: "Increíble la rapidez de la carga inalámbrica. El sistema de apertura automático funciona a la perfección, súper útil cuando conduzco haciendo entregas por la ciudad.",
-              },
-              {
-                initials: "AG", name: "Andrea Gómez", city: "Medellín",
-                text: "El mejor cargador de carro que he instalado. Se ajusta firme en la rejilla y el celular no se mueve para nada, incluso al pasar por huecos. Recomendado al 100%.",
-              },
-              {
-                initials: "JP", name: "Juan Pablo Orrego", city: "Cali",
-                text: "Me llegó al día siguiente. La calidad de los materiales se nota premium y el ventilador evita que el celular se caliente mientras uso el GPS.",
-              },
-            ].map(({ initials, name, city, text }) => (
+            {s.reviews.items.map(({ name, city, text }) => (
               <div key={name} className="bg-paper rounded-2xl p-7 flex flex-col justify-between">
                 <div>
                   <div className="flex gap-0.5 mb-4">
@@ -446,11 +379,11 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
                 </div>
                 <div className="mt-6 pt-5 border-t border-line flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-white text-mi font-semibold flex items-center justify-center text-xs">
-                    {initials}
+                    {initialsOf(name)}
                   </div>
                   <div>
                     <h4 className="font-semibold text-ink text-xs">{name}</h4>
-                    <p className="text-[11px] text-muted mt-0.5">Comprador verificado · {city}</p>
+                    <p className="text-[11px] text-muted mt-0.5">{s.reviews.verified(city)}</p>
                   </div>
                 </div>
               </div>
@@ -463,41 +396,37 @@ export default function ProductLanding({ onOpenCheckout, onViewProduct }: Produc
       <section className="bg-paper py-14 md:py-20">
         <div className="max-w-3xl mx-auto px-5">
           <div className="bg-white rounded-2xl px-6 md:px-12 py-10 md:py-12 text-center">
-            <p className="text-[13px] font-medium text-mi-text">
-              Oferta de lanzamiento
-            </p>
+            <p className="text-[13px] font-medium text-mi-text">{s.ctaFinal.eyebrow}</p>
             <h2 className="mt-3 text-2xl md:text-3xl font-semibold text-ink tracking-tight">
-              Mi 20W Wireless Car Charger
+              {productName}
             </h2>
             <div className="mt-4 flex items-baseline justify-center gap-3">
               <span className="text-3xl font-semibold text-mi-dark">{formatCOP(PRICE)}</span>
               <span className="text-base text-faint line-through">{formatCOP(ORIGINAL_PRICE)}</span>
             </div>
-            <p className="mt-2 text-xs text-muted">
-              Envío gratis a todo Colombia · Empaque sellado oficial · Garantía de 12 meses
-            </p>
+            <p className="mt-2 text-xs text-muted">{s.ctaFinal.note}</p>
             <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 onClick={onOpenCheckout}
                 className="w-full sm:w-auto bg-mi hover:bg-mi-dark text-white h-12 px-10 rounded-lg font-medium text-[15px] transition-colors cursor-pointer"
                 id="cta-bottom-buy-btn"
               >
-                Comprar ahora
+                {s.common.buyNow}
               </button>
               <a
-                href="https://wa.me/573148145417?text=Hola%2C%20quiero%20asesor%C3%ADa%20sobre%20el%20Mi%2020W%20Wireless%20Car%20Charger%20de%20Xiaomi.%20%C2%BFTienen%20disponibilidad%3F"
+                href={`https://wa.me/573148145417?text=${encodeURIComponent(s.wa.advisor)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-8 rounded-lg font-medium text-[15px] text-body border border-[#b0b0b0] hover:border-ink hover:text-ink transition-colors"
                 id="wa-bottom-btn"
               >
                 <MessageCircle className="w-4 h-4" />
-                Hablar con un asesor
+                {s.ctaFinal.advisor}
               </a>
             </div>
             <p className="mt-5 text-[11px] text-muted flex items-center justify-center gap-1.5">
               <CreditCard className="w-3.5 h-3.5" />
-              Paga con PSE, Nequi, tarjetas de crédito/débito o contra entrega
+              {s.ctaFinal.pay}
             </p>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import React from "react";
-import { ChevronRight, ChevronDown, ShoppingBag, Lock, Truck, CreditCard, Smartphone, Building2 } from "lucide-react";
+import { ChevronRight, ChevronDown, ShoppingBag, Lock, Truck, CreditCard, Smartphone, Building2, Globe, AlertCircle } from "lucide-react";
 import { Order } from "../types";
 import { formatCOP } from "../lib/format";
+import { useI18n } from "../lib/i18n";
 
 declare global { interface Window { WidgetCheckout: any; } }
 
@@ -29,11 +30,15 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
   onCancel: () => void;
   initialQuantity?: number;
 }) {
+  const { s, toggle } = useI18n();
+  const c = s.checkout;
   const [form, setForm] = React.useState({
     email: "", name: "", lastName: "", phone: "", cedula: "",
     address: "", addressExtra: "", city: "Bogotá", departamento: "Cundinamarca",
     quantity: Math.min(5, Math.max(1, initialQuantity))
   });
+  const [marketingOptIn, setMarketingOptIn] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [sameBilling, setSameBilling] = React.useState(true);
@@ -60,6 +65,7 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
 
   const pay = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
     try {
       const fbp = getCookie('_fbp');
@@ -83,15 +89,17 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
       const data = await res.json();
       if (!data.success) { alert(data.error || 'Error'); setLoading(false); return; }
 
+      // Contra entrega: el pedido queda registrado y se paga al recibir.
       if (paymentMethod === 'contraentrega') {
         trackPurchase(data.order.id, data.wompi.reference, price * form.quantity);
         onOrderComplete(data.order, false);
         return;
       }
 
+      // Pago en línea (Wompi / PSE): si la pasarela no está lista NO se finge éxito.
       if (!config?.hasWompiConfig || !window.WidgetCheckout) {
-        trackPurchase(data.order.id, data.wompi.reference, price * form.quantity);
-        onOrderComplete(data.order, false);
+        setError(c.errWompiUnavailable);
+        setLoading(false);
         return;
       }
 
@@ -106,43 +114,52 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
       });
       checkout.open((result: any) => {
         if (result?.transaction?.status === 'APPROVED') {
+          // Solo aquí (pago aprobado) se registra la conversión y se muestra el éxito.
           trackPurchase(data.order.id, data.wompi.reference, price * form.quantity);
           onOrderComplete({ ...data.order, status: 'APPROVED' }, true);
         } else {
-          onOrderComplete(data.order, false);
+          // Rechazado o cancelado: el usuario se queda en el checkout para reintentar.
+          setError(c.errNotApproved);
+          setLoading(false);
         }
       });
     } catch {
-      alert('Error al procesar el pago');
+      setError(c.errGeneric);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const total = price * form.quantity;
   const listTotal = originalPrice * form.quantity;
   const savings = listTotal - total;
 
-  const inputClass = "w-full rounded-lg border border-line bg-white px-3.5 py-3 text-base text-body placeholder:text-faint focus:border-mi";
+  const inputClass = "w-full rounded-lg border border-line bg-white px-3.5 py-3 text-base text-body placeholder:text-muted focus:border-mi";
 
   return (
     <div className="bg-paper min-h-screen">
       {/* Encabezado minimal de pago */}
       <header className="bg-white border-b border-line px-5 py-2.5 flex items-center justify-between">
-        <button onClick={onCancel} className="cursor-pointer" aria-label="Volver al inicio">
+        <button onClick={onCancel} className="cursor-pointer" aria-label={c.home}>
           <img src="/xiaomi-cartech-logo.png" alt="Xiaomi CarTech" className="h-12 w-auto block" />
         </button>
-        <div className="flex items-center gap-1.5 text-[13px] text-muted">
-          <Lock className="w-3.5 h-3.5" />
-          Pago seguro
+        <div className="flex items-center gap-4">
+          <button onClick={toggle} className="inline-flex items-center gap-1 text-[13px] font-semibold text-body hover:text-mi transition-colors cursor-pointer" aria-label={s.nav.langAria}>
+            <Globe className="w-3.5 h-3.5" strokeWidth={1.8} />
+            {s.nav.langLabel}
+          </button>
+          <div className="flex items-center gap-1.5 text-[13px] text-muted">
+            <Lock className="w-3.5 h-3.5" />
+            {c.securePay}
+          </div>
         </div>
       </header>
 
       <div className="max-w-mi mx-auto px-5">
         {/* Miga de pan */}
         <div className="py-3.5 text-[13px] text-faint flex items-center gap-1.5">
-          <button onClick={onCancel} className="text-mi-text hover:text-mi-dark cursor-pointer">Inicio</button>
+          <button onClick={onCancel} className="text-mi-text hover:text-mi-dark cursor-pointer">{c.home}</button>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-body">Finalizar compra</span>
+          <span className="text-body">{c.finish}</span>
         </div>
 
         <div className="pb-16 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 lg:gap-8 items-start">
@@ -152,21 +169,21 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
 
             {/* Contacto */}
             <section className="bg-white rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-ink mb-4">Contacto</h2>
-              <input required type="email" placeholder="Correo electrónico"
+              <h2 className="text-lg font-semibold text-ink mb-4">{c.contact}</h2>
+              <input required type="email" placeholder={c.email} aria-label={c.email}
                 value={form.email} onChange={f('email')}
                 className={inputClass} />
               <label className="flex items-center gap-2 mt-3 text-[13px] text-body cursor-pointer">
-                <input type="checkbox" style={{ accentColor: '#ff6900', width: 16, height: 16 }} />
-                Enviarme novedades y ofertas por correo electrónico
+                <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} style={{ accentColor: '#ff6900', width: 16, height: 16 }} />
+                {c.marketing}
               </label>
             </section>
 
             {/* Entrega */}
             <section className="bg-white rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-ink mb-4">Entrega</h2>
+              <h2 className="text-lg font-semibold text-ink mb-4">{c.delivery}</h2>
               <div className="space-y-2.5">
-                <select value={form.departamento} onChange={f('departamento')} className={inputClass} aria-label="Departamento">
+                <select value={form.departamento} onChange={f('departamento')} className={inputClass} aria-label={c.department}>
                   <option>Cundinamarca</option>
                   <option>Antioquia</option>
                   <option>Valle del Cauca</option>
@@ -176,56 +193,56 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
                   <option>Otro</option>
                 </select>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <input required placeholder="Nombre" value={form.name} onChange={f('name')} className={inputClass} />
-                  <input required placeholder="Apellidos" value={form.lastName} onChange={f('lastName')} className={inputClass} />
+                  <input required placeholder={c.name} aria-label={c.name} autoComplete="given-name" value={form.name} onChange={f('name')} className={inputClass} />
+                  <input required placeholder={c.lastName} aria-label={c.lastName} autoComplete="family-name" value={form.lastName} onChange={f('lastName')} className={inputClass} />
                 </div>
-                <input required placeholder="Cédula" value={form.cedula} onChange={f('cedula')} className={inputClass} />
-                <input required placeholder="Dirección" value={form.address} onChange={f('address')} className={inputClass} />
-                <input placeholder="Casa, apartamento, etc. (opcional)" value={form.addressExtra} onChange={f('addressExtra')} className={inputClass} />
+                <input required placeholder={c.idNum} aria-label={c.idNum} inputMode="numeric" value={form.cedula} onChange={f('cedula')} className={inputClass} />
+                <input required placeholder={c.address} aria-label={c.address} autoComplete="street-address" value={form.address} onChange={f('address')} className={inputClass} />
+                <input placeholder={c.addressExtra} aria-label={c.addressExtra} value={form.addressExtra} onChange={f('addressExtra')} className={inputClass} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <input required placeholder="Ciudad" value={form.city} onChange={f('city')} className={inputClass} />
-                  <input placeholder="Código postal (opcional)" className={inputClass} />
+                  <input required placeholder={c.city} aria-label={c.city} autoComplete="address-level2" value={form.city} onChange={f('city')} className={inputClass} />
+                  <input placeholder={c.zip} aria-label={c.zip} inputMode="numeric" autoComplete="postal-code" className={inputClass} />
                 </div>
-                <input required placeholder="Teléfono" type="tel" value={form.phone} onChange={f('phone')} className={inputClass} />
+                <input required placeholder={c.phone} aria-label={c.phone} type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={f('phone')} className={inputClass} />
               </div>
 
               {/* Método de envío */}
-              <h3 className="text-sm font-semibold text-ink mt-6 mb-3">Método de envío</h3>
+              <h3 className="text-sm font-semibold text-ink mt-6 mb-3">{c.shipMethod}</h3>
               <div className="border-2 border-mi rounded-lg px-4 py-3.5 flex justify-between items-center bg-mi-soft/40">
                 <div className="flex items-center gap-2.5">
                   <Truck className="w-4.5 h-4.5 text-mi-text" />
-                  <span className="text-sm font-medium text-ink">Envío nacional (2–5 días hábiles)</span>
+                  <span className="text-sm font-medium text-ink">{c.shipNational}</span>
                 </div>
-                <span className="text-sm font-semibold text-mi-text">Gratis</span>
+                <span className="text-sm font-semibold text-mi-text">{s.common.free}</span>
               </div>
             </section>
 
             {/* Pago */}
             <section className="bg-white rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-ink mb-1.5">Pago</h2>
-              <p className="text-[13px] text-muted mb-4">Todas las transacciones son seguras y están encriptadas.</p>
+              <h2 className="text-lg font-semibold text-ink mb-1.5">{c.payment}</h2>
+              <p className="text-[13px] text-muted mb-4">{c.paymentNote}</p>
 
-              <div className="rounded-lg border border-line overflow-hidden divide-y divide-line" role="radiogroup" aria-label="Método de pago">
+              <div className="rounded-lg border border-line overflow-hidden divide-y divide-line" role="radiogroup" aria-label={c.paymentGroup}>
                 {[
                   {
                     id: 'wompi' as PaymentMethod,
                     icon: <CreditCard className="w-4 h-4 text-body" />,
-                    label: 'Tarjetas, Nequi y más (Wompi)',
+                    label: c.wompi,
                     badges: ['Visa', 'MC', 'Amex', '+4'],
-                    note: 'Se te redirigirá a Wompi para completar el pago.',
+                    note: c.wompiNote,
                   },
                   {
                     id: 'pse' as PaymentMethod,
                     icon: <Building2 className="w-4 h-4 text-body" />,
-                    label: 'Débito bancario PSE o crédito Addi',
+                    label: c.pse,
                     badges: ['PSE', 'Addi'],
                   },
                   {
                     id: 'contraentrega' as PaymentMethod,
                     icon: <Smartphone className="w-4 h-4 text-body" />,
-                    label: 'Pago contra entrega',
+                    label: c.cod,
                     badges: [],
-                    note: 'Pagas en efectivo o transferencia al recibir el producto.',
+                    note: c.codNote,
                   },
                 ].map(({ id, icon, label, badges, note }) => (
                   <label
@@ -261,11 +278,11 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
 
             {/* Dirección de facturación */}
             <section className="bg-white rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-ink mb-4">Dirección de facturación</h2>
-              <div className="rounded-lg border border-line overflow-hidden divide-y divide-line" role="radiogroup" aria-label="Dirección de facturación">
+              <h2 className="text-lg font-semibold text-ink mb-4">{c.billing}</h2>
+              <div className="rounded-lg border border-line overflow-hidden divide-y divide-line" role="radiogroup" aria-label={c.billing}>
                 {[
-                  { value: true, label: 'La misma dirección de envío' },
-                  { value: false, label: 'Usar una dirección de facturación distinta' },
+                  { value: true, label: c.billingSame },
+                  { value: false, label: c.billingOther },
                 ].map(({ value, label }) => (
                   <label key={label} className={`flex items-center gap-2.5 px-4 py-3.5 cursor-pointer transition-colors ${sameBilling === value ? 'bg-mi-soft/40' : 'bg-white hover:bg-paper/60'}`}>
                     <input
@@ -281,9 +298,16 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
               </div>
             </section>
 
+            {error && (
+              <div role="alert" className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <button type="submit" disabled={loading}
               className={`w-full h-[52px] rounded-lg text-white text-base font-semibold transition-colors ${loading ? 'bg-faint cursor-not-allowed' : 'bg-mi hover:bg-mi-dark cursor-pointer'}`}>
-              {loading ? 'Procesando…' : 'Pagar ahora'}
+              {loading ? c.processing : c.payNow}
             </button>
           </form>
 
@@ -292,12 +316,12 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
             <button
               type="button"
               onClick={() => setSummaryOpen(!summaryOpen)}
-              className="lg:hidden w-full flex items-center justify-between cursor-pointer"
+              className="lg:hidden w-full min-h-11 flex items-center justify-between cursor-pointer"
               aria-expanded={summaryOpen}
             >
               <span className="flex items-center gap-2 text-sm font-medium text-mi-text">
                 <ShoppingBag className="w-4 h-4" />
-                {summaryOpen ? 'Ocultar resumen del pedido' : 'Mostrar resumen del pedido'}
+                {summaryOpen ? c.hideSummary : c.showSummary}
                 <ChevronDown className={`w-4 h-4 transition-transform ${summaryOpen ? 'rotate-180' : ''}`} />
               </span>
               <span className="text-base font-semibold text-ink">{formatCOP(total)}</span>
@@ -317,7 +341,7 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
                 <p className="text-sm font-medium text-ink">Mi 20W Wireless Car Charger</p>
                 <p className="text-[13px] text-muted">Xiaomi CarTech</p>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <label htmlFor="qty" className="text-xs text-muted">Cantidad:</label>
+                  <label htmlFor="qty" className="text-xs text-muted">{c.qtyLabel}</label>
                   <select id="qty" value={form.quantity} onChange={e => setForm({ ...form, quantity: Number(e.target.value) })}
                     className="border border-line rounded-lg px-3 py-2 text-base bg-white min-h-11">
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
@@ -329,28 +353,28 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
 
             {/* Código de descuento */}
             <div className="flex gap-2 py-5 border-b border-line">
-              <input placeholder="Código de descuento" className={`${inputClass} flex-1 text-sm`} />
+              <input placeholder={c.discountCode} aria-label={c.discountCode} className={`${inputClass} flex-1`} />
               <button type="button" className="border border-line rounded-lg px-4 text-sm font-medium bg-white text-body hover:border-ink transition-colors cursor-pointer">
-                Aplicar
+                {c.apply}
               </button>
             </div>
 
             {/* Totales */}
             <div className="pt-5 text-sm space-y-2.5">
               <div className="flex justify-between text-body">
-                <span>Precio de lista ({form.quantity} {form.quantity === 1 ? 'artículo' : 'artículos'})</span>
+                <span>{c.listPrice(form.quantity)}</span>
                 <span className="line-through text-muted">{formatCOP(listTotal)}</span>
               </div>
               <div className="flex justify-between text-mi-text font-medium">
-                <span>Descuento de lanzamiento</span>
+                <span>{c.launchDiscount}</span>
                 <span>−{formatCOP(savings)}</span>
               </div>
               <div className="flex justify-between text-body">
-                <span>Envío</span>
-                <span className="font-medium text-mi-text">Gratis</span>
+                <span>{c.shipping}</span>
+                <span className="font-medium text-mi-text">{s.common.free}</span>
               </div>
               <div className="flex justify-between items-baseline pt-3.5 border-t border-line font-semibold text-base text-ink">
-                <span>Total</span>
+                <span>{s.common.total}</span>
                 <span>{formatCOP(total)} <span className="text-xs font-normal text-muted">COP</span></span>
               </div>
             </div>
@@ -358,9 +382,9 @@ export default function CheckoutPage({ onOrderComplete, onCancel, initialQuantit
             {/* Confianza */}
             <div className="mt-5 pt-5 border-t border-line space-y-2">
               {[
-                { icon: <Lock className="w-3.5 h-3.5" />, text: 'Pago 100% seguro y encriptado' },
-                { icon: <Truck className="w-3.5 h-3.5" />, text: 'Envío gratis a todo Colombia' },
-                { icon: <ShoppingBag className="w-3.5 h-3.5" />, text: 'Garantía oficial Xiaomi de 12 meses' },
+                { icon: <Lock className="w-3.5 h-3.5" />, text: c.trust[0] },
+                { icon: <Truck className="w-3.5 h-3.5" />, text: c.trust[1] },
+                { icon: <ShoppingBag className="w-3.5 h-3.5" />, text: c.trust[2] },
               ].map(({ icon, text }) => (
                 <div key={text} className="flex items-center gap-2 text-xs text-muted">
                   <span className="text-mi-text">{icon}</span>

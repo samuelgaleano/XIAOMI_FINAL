@@ -13,7 +13,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { formatCOP } from "../lib/format";
-import { PRODUCT, GALLERY, SPECS } from "../lib/product";
+import { PRODUCT, getProductCopy } from "../lib/product";
+import { useI18n } from "../lib/i18n";
 
 interface ProductDetailProps {
   onBuyNow: (qty: number) => void;
@@ -22,11 +23,13 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: ProductDetailProps) {
+  const { s, lang } = useI18n();
+  const copy = getProductCopy(lang);
   const [active, setActive] = React.useState(0);
   const [qty, setQty] = React.useState(1);
   const touchStartX = React.useRef<number | null>(null);
 
-  const count = GALLERY.length;
+  const count = PRODUCT.images.length;
   const go = (dir: number) => setActive((i) => (i + dir + count) % count);
 
   const savings = PRODUCT.originalPrice - PRODUCT.price;
@@ -42,17 +45,19 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
     touchStartX.current = null;
   };
 
+  const trustIcons = [Truck, ShieldCheck, RotateCcw];
+
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-mi mx-auto px-5">
 
         {/* Miga de pan */}
-        <nav className="py-4 text-[13px] text-faint flex items-center gap-1.5" aria-label="Ruta de navegación">
-          <button onClick={onBack} className="text-mi-text hover:text-mi-dark cursor-pointer">Inicio</button>
+        <nav className="py-4 text-[13px] text-faint flex items-center gap-1.5" aria-label="breadcrumb">
+          <button onClick={onBack} className="text-mi-text hover:text-mi-dark cursor-pointer">{s.detail.home}</button>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span>Tienda</span>
+          <span>{s.detail.store}</span>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-body">{PRODUCT.name}</span>
+          <span className="text-body">{copy.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pb-14">
@@ -64,13 +69,15 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
-              {GALLERY.map((img, i) => (
+              {PRODUCT.images.map((src, i) => (
                 <img
                   key={i}
-                  src={img.src}
-                  alt={img.alt}
+                  src={src}
+                  alt={copy.captions[i]}
                   referrerPolicy="no-referrer"
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                  loading={i === 0 ? "eager" : "lazy"}
+                  fetchPriority={i === 0 ? "high" : undefined}
+                  className={`absolute inset-0 w-full h-full object-contain p-6 transition-opacity duration-300 ${
                     i === active ? "opacity-100" : "opacity-0 pointer-events-none"
                   }`}
                 />
@@ -79,14 +86,14 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
               {/* Controles anterior / siguiente */}
               <button
                 onClick={() => go(-1)}
-                aria-label="Imagen anterior"
+                aria-label={s.detail.prev}
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-ink shadow-sm flex items-center justify-center transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => go(1)}
-                aria-label="Imagen siguiente"
+                aria-label={s.detail.next}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-ink shadow-sm flex items-center justify-center transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -99,23 +106,23 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
 
               {/* Leyenda */}
               <p className="absolute bottom-3 left-3 right-3 text-white text-[13px] font-medium bg-black/45 backdrop-blur-sm px-3.5 py-2 rounded-lg">
-                {GALLERY[active].caption}
+                {copy.captions[active]}
               </p>
             </div>
 
             {/* Miniaturas */}
             <div className="flex gap-3 mt-4">
-              {GALLERY.map((img, i) => (
+              {PRODUCT.images.map((src, i) => (
                 <button
                   key={i}
                   onClick={() => setActive(i)}
-                  aria-label={`Ver imagen ${i + 1}`}
+                  aria-label={s.detail.thumb(i + 1)}
                   aria-current={i === active}
                   className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-paper shrink-0 transition-all cursor-pointer ${
                     i === active ? "ring-2 ring-mi ring-offset-2" : "opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <img src={img.src} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                  <img src={src} alt="" referrerPolicy="no-referrer" loading="lazy" className="w-full h-full object-contain p-1.5" />
                 </button>
               ))}
             </div>
@@ -123,36 +130,38 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
 
           {/* PANEL DE COMPRA */}
           <div className="lg:sticky lg:top-6 self-start">
-            <p className="text-[13px] font-medium text-muted">{PRODUCT.brand}</p>
+            <p className="text-[13px] font-medium text-muted">{copy.brand}</p>
             <h1 className="mt-1.5 text-2xl md:text-[32px] leading-tight font-semibold text-ink tracking-tight">
-              {PRODUCT.name}
+              {copy.name}
             </h1>
 
             {/* Calificación */}
             <div className="mt-3 flex items-center gap-2">
-              <div className="flex gap-0.5" role="img" aria-label={`Calificación ${PRODUCT.rating} de 5`}>
+              <div className="flex gap-0.5" role="img" aria-label={s.ratingLabel(PRODUCT.rating)}>
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-mi text-mi" aria-hidden="true" />
                 ))}
               </div>
-              <span className="text-[13px] text-muted">
-                {PRODUCT.rating} · {PRODUCT.reviewCount} reseñas verificadas
-              </span>
+              <span className="text-[13px] text-muted">{s.detail.reviewsN(PRODUCT.rating, PRODUCT.reviewCount)}</span>
             </div>
 
             {/* Precio */}
-            <div className="mt-5 flex items-baseline gap-3">
+            <div className="mt-5 flex items-baseline flex-wrap gap-x-3 gap-y-2">
               <span className="text-3xl font-semibold text-mi-dark">{formatCOP(PRODUCT.price)}</span>
-              <span className="text-lg text-faint line-through">{formatCOP(PRODUCT.originalPrice)}</span>
+              <span className="text-lg text-muted line-through">{formatCOP(PRODUCT.originalPrice)}</span>
               <span className="text-xs font-medium text-mi-text bg-mi-soft border border-mi/20 rounded px-2 py-1">
-                Ahorras {formatCOP(savings)}
+                {s.hero.save(formatCOP(savings))}
               </span>
             </div>
-            <p className="mt-1.5 text-[13px] text-muted">Impuestos incluidos · Envío gratis a todo Colombia</p>
+            <p className="mt-1.5 text-[13px] text-muted">{s.detail.taxIncl}</p>
+            <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium text-green-700">
+              <span className="w-2 h-2 rounded-full bg-green-600" aria-hidden="true"></span>
+              {s.checkout.inStock}
+            </p>
 
             {/* Puntos clave */}
             <ul className="mt-6 space-y-2.5 border-t border-line pt-6">
-              {PRODUCT.highlights.map((h) => (
+              {copy.highlights.map((h) => (
                 <li key={h} className="flex items-start gap-2.5 text-sm text-body">
                   <Check className="w-4 h-4 text-mi-text shrink-0 mt-0.5" />
                   {h}
@@ -162,12 +171,12 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
 
             {/* Cantidad */}
             <div className="mt-6 flex items-center gap-4">
-              <span className="text-sm font-medium text-ink">Cantidad</span>
+              <span className="text-sm font-medium text-ink">{s.common.quantity}</span>
               <div className="flex items-center border border-line rounded-lg overflow-hidden">
                 <button
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   disabled={qty <= 1}
-                  aria-label="Disminuir cantidad"
+                  aria-label={s.detail.decrease}
                   className="w-11 h-11 flex items-center justify-center text-ink hover:bg-paper disabled:text-faint disabled:hover:bg-white transition-colors cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Minus className="w-4 h-4" />
@@ -176,14 +185,14 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
                 <button
                   onClick={() => setQty((q) => Math.min(PRODUCT.maxQuantity, q + 1))}
                   disabled={qty >= PRODUCT.maxQuantity}
-                  aria-label="Aumentar cantidad"
+                  aria-label={s.detail.increase}
                   className="w-11 h-11 flex items-center justify-center text-ink hover:bg-paper disabled:text-faint disabled:hover:bg-white transition-colors cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
               {qty > 1 && (
-                <span className="text-sm text-muted">Total: <span className="font-semibold text-ink">{formatCOP(total)}</span></span>
+                <span className="text-sm text-muted">{s.detail.totalX(formatCOP(total))}</span>
               )}
             </div>
 
@@ -195,42 +204,48 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
                 id="pdp-add-to-cart-btn"
               >
                 <ShoppingCart className="w-4.5 h-4.5" />
-                Agregar al carrito
+                {s.common.addToCart}
               </button>
               <button
                 onClick={() => onBuyNow(qty)}
                 className="flex-1 inline-flex items-center justify-center h-12 px-6 rounded-lg font-semibold text-[15px] text-white bg-mi hover:bg-mi-dark transition-colors cursor-pointer"
                 id="pdp-buy-now-btn"
               >
-                Comprar ahora
+                {s.common.buyNow}
               </button>
+            </div>
+
+            {/* Medios de pago visibles en el punto de decisión */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {["Wompi", "PSE", "Nequi", "Visa", "Mastercard"].map((m) => (
+                <span key={m} className="border border-line text-muted py-0.5 px-2 rounded text-[10px] font-medium">{m}</span>
+              ))}
             </div>
 
             {/* Confianza */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-line pt-6">
-              {[
-                { icon: Truck, title: "Envío gratis", sub: "2 a 5 días hábiles" },
-                { icon: ShieldCheck, title: "Garantía oficial", sub: "12 meses Xiaomi" },
-                { icon: RotateCcw, title: "Devoluciones", sub: "14 días sin costo" },
-              ].map(({ icon: Icon, title, sub }) => (
-                <div key={title} className="flex items-center gap-2.5">
-                  <Icon className="w-5 h-5 text-mi shrink-0" strokeWidth={1.6} />
-                  <div>
-                    <p className="text-[13px] font-medium text-ink leading-tight">{title}</p>
-                    <p className="text-[11px] text-muted">{sub}</p>
+              {s.detail.trust.map((t, i) => {
+                const Icon = trustIcons[i];
+                return (
+                  <div key={t.title} className="flex items-center gap-2.5">
+                    <Icon className="w-5 h-5 text-mi shrink-0" strokeWidth={1.6} />
+                    <div>
+                      <p className="text-[13px] font-medium text-ink leading-tight">{t.title}</p>
+                      <p className="text-[11px] text-muted">{t.sub}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <a
-              href="https://wa.me/573148145417?text=Hola%2C%20quiero%20asesor%C3%ADa%20sobre%20el%20Mi%2020W%20Wireless%20Car%20Charger."
+              href={`https://wa.me/573148145417?text=${encodeURIComponent(s.wa.advisorShort)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-mi transition-colors"
             >
               <MessageCircle className="w-4 h-4" />
-              ¿Tienes dudas? Habla con un asesor
+              {s.detail.askAdvisor}
             </a>
           </div>
         </div>
@@ -238,10 +253,10 @@ export default function ProductDetail({ onBuyNow, onAddToCart, onBack }: Product
         {/* ESPECIFICACIONES */}
         <div className="border-t border-line py-12">
           <h2 className="text-xl md:text-2xl font-semibold text-ink tracking-tight text-center">
-            Especificaciones
+            {s.specsHeading}
           </h2>
           <div className="mt-8 max-w-3xl mx-auto bg-paper rounded-2xl px-6 md:px-10 py-4">
-            {SPECS.map(({ group, rows }) => (
+            {copy.specs.map(({ group, rows }) => (
               <div key={group} className="py-5 border-b border-line last:border-0">
                 <h3 className="text-sm font-semibold text-mi-text mb-3">{group}</h3>
                 {rows.map(([label, value]) => (
